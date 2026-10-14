@@ -21,6 +21,7 @@ from Background.logic import MapRuntime
 from Background.wave_overlay import WaveOverlay
 from Background.tutorials import TUTORIALS, TutorialRun
 from Background.ui_assets import setup_ui, Color, MakeButton, Fonts, MouseClick, Width, Height
+from Enemies import effects as effects_mod
 
 if "--map-editor" in sys.argv:
     import map_editor
@@ -943,6 +944,8 @@ while running:
                 else:
                     bullet.draw(ui_assets.screen)
             particles_file.update_and_draw(ui_assets.screen)
+            effects_mod.update_effects()
+            effects_mod.draw_effects(ui_assets.screen)
             for enemy in enemies:
                 enemy.target(player)
                 enemy.move()

@@ -7,6 +7,7 @@ from Enemies.drops import drops, exp
 import Enemies.drops as drops_mod
 from Background import run_stats
 from Background import walls as walls_mod
+import Enemies.effects as effects_mod
 
 enemies = []
 HAUNTING_ENEMY_NAMES = ("Chaser", "Dasher", "Blaster", "Ghost", "Spiker", "Guardian", "Warper", "Turret")
@@ -93,16 +94,18 @@ def _split_enemy(enemy, size_ratio=0.6, min_size=8):
         return
     if enemy.size < min_size:
         return
+    if enemy.type == "boss":
+        return
     new_size = max(min_size, enemy.size * size_ratio)
     half_health = max(1.0, enemy.health / 2)
     for i in range(8):
-        effect = particles_mod.HitParticle(
+        effects_mod = particles_mod.HitParticle(
             enemy.x + random.uniform(-10, 10),
             enemy.y + random.uniform(-10, 10),
             4, (255, 240, 120),
         )
-        effect.direction = Vector(random.uniform(-1, 1), random.uniform(-1, 1)).normalize().multiply(2)
-        particles.append(effect)
+        effects_mod.direction = Vector(random.uniform(-1, 1), random.uniform(-1, 1)).normalize().multiply(2)
+        particles.append(effects_mod)
     enemies.remove(enemy)
     for i in range(2):
         offset_x = random.uniform(-enemy.size, enemy.size)
@@ -139,8 +142,6 @@ class Enemy:
         enemies.append(self)
         self.dash_cooldown = 0
         self.dash_time = 0
-        self.dot_effects = []
-        self.poison_frames = 0
         self.drawing_color = color
         self.haunted = False
         self.shield_active = False
@@ -157,79 +158,79 @@ class Enemy:
         self.avoid_side = 1
         self.walls = []
         apply_haunting(self)
+        self.type = "enemy"
     
-    def dot(self, damage, time, type="poison"):
-        if self.haunted:
-            return
-        if type not in [effect["type"] for effect in self.dot_effects]:
-            self.dot_effects.append({"damage": damage, "time": time, "type": type})
-        else:
-            for effect in self.dot_effects:
-                if effect["type"] == type:
-                    effect["damage"] = max(effect["damage"], damage)
-                    effect["time"] = max(effect["time"], time)
-    
-    def hurt(self, bullet):
-        if self.shield_active and self.ability_shield_blocks_bullet(bullet):
-            for i in range(4):
-                effect = particles_mod.HitParticle(
-                    bullet.x + random.randint(-4, 4),
-                    bullet.y + random.randint(-4, 4),
-                    4, (200, 210, 255),
-                )
-                particles.append(effect)
-            return
-        if self.haunted:
+    def hurt(self, bullet, direct_damage=False):
+        if direct_damage:
+            if self.haunted:
+                if self.harm_frames == 0:
+                    self.harm_frames = 20
+                return
             if self.harm_frames == 0:
-                self.harm_frames = 20
-                knockback_scale = 1
+                self.harm_frames = 60
+                self.health -= bullet
+                if self.health <= 0:
+                    self.die()
             else:
                 self.harm_frames = round(self.harm_frames / 2)
                 if self.harm_frames < 2:
                     self.harm_frames = 0
-                knockback_scale = 1 / 3
-            self.x += bullet.velocity.x * bullet.knockback * knockback_scale
-            self.y += bullet.velocity.y * bullet.knockback * knockback_scale
-            return
-        if self.harm_frames == 0:
-            self.harm_frames = 60
-            self.health -= bullet.damage
-            self.x += bullet.velocity.x * bullet.knockback
-            self.y += bullet.velocity.y * bullet.knockback
-            particle_count = min(14, max(2, int(bullet.damage * 2)))
-            for i in range(particle_count):
-                effect = particles_mod.HitParticle(
-                    bullet.x + random.randint(-5, 5),
-                    bullet.y + random.randint(-5, 5),
-                    self.size / 3,
-                    bullet.color
-                )
-                if bullet.pierce <= 1:
-                    effect.direction = bullet.velocity.multiply(-0.2)
-                else:
-                    effect.direction = bullet.velocity.multiply(0.3)
-                particles.append(effect)
-            if self.health <= 0:
-                self.die()
         else:
-            self.harm_frames = round(self.harm_frames / 2)
-            if self.harm_frames < 2:
-                self.harm_frames = 0
-            self.x += bullet.velocity.x * bullet.knockback / 3
-            self.y += bullet.velocity.y * bullet.knockback / 3
-            particle_count = min(10, max(2, int(bullet.damage * 2)))
-            for i in range(particle_count):
-                effect = particles_mod.HitParticle(bullet.x+random.randint(-5, 5), bullet.y+random.randint(-5, 5), self.size/4, (100, 200, 250))
-                if bullet.pierce <= 1:
-                    effect.direction = bullet.velocity.multiply(-0.05)
+            if self.shield_active and self.ability_shield_blocks_bullet(bullet):
+                for i in range(4):
+                    effect = particles_mod.HitParticle(
+                        bullet.x + random.randint(-4, 4),
+                        bullet.y + random.randint(-4, 4),
+                        4, (200, 210, 255),
+                    )
+                    particles.append(effect)
+                return
+            if self.haunted:
+                if self.harm_frames == 0:
+                    self.harm_frames = 20
+                    knockback_scale = 1
                 else:
-                    effect.direction = bullet.velocity.multiply(0.1)
-                particles.append(effect)
-        red, green, blue = self.color
-        red = max(0, min(255, int(round(red))))
-        green = max(0, min(255, int(round(green))))
-        blue = max(0, min(255, int(round(blue))))
-        self.color = (red, green, blue)
+                    self.harm_frames = round(self.harm_frames / 2)
+                    if self.harm_frames < 2:
+                        self.harm_frames = 0
+                    knockback_scale = 1 / 3
+                self.x += bullet.velocity.x * bullet.knockback * knockback_scale
+                self.y += bullet.velocity.y * bullet.knockback * knockback_scale
+                return
+            if self.harm_frames == 0:
+                self.harm_frames = 60
+                self.health -= bullet.damage
+                self.x += bullet.velocity.x * bullet.knockback
+                self.y += bullet.velocity.y * bullet.knockback
+                particle_count = min(14, max(2, int(bullet.damage * 2)))
+                for i in range(particle_count):
+                    effect = particles_mod.HitParticle(
+                        bullet.x + random.randint(-5, 5),
+                        bullet.y + random.randint(-5, 5),
+                        self.size / 3,
+                        bullet.color
+                    )
+                    if bullet.pierce <= 1:
+                        effect.direction = bullet.velocity.multiply(-0.2)
+                    else:
+                        effect.direction = bullet.velocity.multiply(0.3)
+                    particles.append(effect)
+                if self.health <= 0:
+                    self.die()
+            else:
+                self.harm_frames = round(self.harm_frames / 2)
+                if self.harm_frames < 2:
+                    self.harm_frames = 0
+                self.x += bullet.velocity.x * bullet.knockback / 3
+                self.y += bullet.velocity.y * bullet.knockback / 3
+                particle_count = min(10, max(2, int(bullet.damage * 2)))
+                for i in range(particle_count):
+                    effect = particles_mod.HitParticle(bullet.x+random.randint(-5, 5), bullet.y+random.randint(-5, 5), self.size/4, (100, 200, 250))
+                    if bullet.pierce <= 1:
+                        effect.direction = bullet.velocity.multiply(-0.05)
+                    else:
+                        effect.direction = bullet.velocity.multiply(0.1)
+                    particles.append(effect)
     
     def die(self, multiplier=.7):
         global exp
@@ -390,23 +391,6 @@ class Enemy:
             self.dash_time -= 1
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
-        for effect in self.dot_effects[:]:
-            if effect["type"] == "poison":
-                # Always apply poison damage/particles before checking time
-                if self.poison_frames <= 0:
-                    self.health -= effect["damage"]
-                    self.poison_frames = 5
-                    particle = particles_mod.HitParticle(self.x, self.y, 5, (100, 255, 100))
-                    particle.direction = Vector(random.uniform(-0.5, 0.5), random.uniform(-0.5, 0.5)).normalize().multiply(4)
-                    particles.append(particle)
-                    if self.health <= 0:
-                        self.die()
-                        return
-                else:
-                    self.poison_frames -= 1
-                effect["time"] -= 1
-                if effect["time"] <= 0:
-                    self.dot_effects.remove(effect)
         self.x += self.velocity.x
         self.y += self.velocity.y
         self.velocity = self.velocity.multiply(friction)  # Friction
@@ -426,11 +410,6 @@ class Enemy:
         green_mod = 0
         blue_mod = 0
         red, green, blue = self.color
-        for effect in self.dot_effects:
-            if effect["type"] == "poison":
-                green_mod = 20
-                red_mod = -10
-                blue_mod = -10
         if red < 0:
             red = 0
         if green < 0:
@@ -941,8 +920,8 @@ class Chaser(Enemy):
     def draw(self, screen):
         super().draw(screen)
 
-    def hurt(self, bullet):
-        super().hurt(bullet)
+    def hurt(self, bullet, direct_damage=False):
+        super().hurt(bullet, direct_damage=direct_damage)
     
     def die(self):
         # Track achievement: record enemy kill
@@ -1011,8 +990,8 @@ class Dasher(Enemy):
         self.collide()
         self.ability_dash_cooldown_step(warning_threshold=10, warning_count=6, warning_size=self.size / 3, warning_color=(200, 150, 0))
     
-    def hurt(self, bullet):
-        super().hurt(bullet)
+    def hurt(self, bullet, direct_damage=False):
+        super().hurt(bullet, direct_damage=direct_damage)
         self.ability_interrupt_dash(reset_cooldown_frames=60)
 
     def die(self): 
@@ -1051,9 +1030,9 @@ class Ghost(Enemy):
         self.feared = False
         self.avoids_walls = False
 
-    def hurt(self, bullet):
+    def hurt(self, bullet, direct_damage=False):
         if self.feared:
-            super().hurt(bullet)
+            super().hurt(bullet, direct_damage=direct_damage)
             if self.harm_frames == 0:
                 self.velocity = self.velocity.multiply(-1)
     
@@ -1222,6 +1201,7 @@ class Shatterking(Enemy):
         self.warped = False
         self.harmed_during_laser = False
         self.spawn_time = 0
+        self.type = "boss"
 
     def target(self, player):
         if self.warped == False:
@@ -1233,7 +1213,7 @@ class Shatterking(Enemy):
                 self.fired_lasers = 0
                 self.warped = False
                 if self.harmed_during_laser:
-                    self.ability_spawn_minion_wave(30, 2, 60, 10, "Spiker")
+                    self.ability_spawn_minion_wave(30, 1, 60, 10, "Spiker")
                 self.harmed_during_laser = False
             if self.fired_lasers < 3:
                 if self.ability_laser_target_step(player, engage_distance=360, charge_frames=36, beam_frames=12, cooldown_frames=30):
@@ -1242,8 +1222,8 @@ class Shatterking(Enemy):
         super().target(player)
         self.hit(player)
 
-    def hurt(self, damage):
-        super().hurt(damage)
+    def hurt(self, damage, direct_damage=False):
+        super().hurt(damage, direct_damage=direct_damage)
         if self.fired_lasers > 0:
             self.harmed_during_laser = True
 

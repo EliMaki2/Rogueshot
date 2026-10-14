@@ -1,6 +1,7 @@
 import math
 import pygame
 import random
+import Enemies.effects as effects_mod
 
 class Vector:
     def __init__(self, x, y):
@@ -79,9 +80,8 @@ class Poison(Bullet):
                 return True
             if self.collides(target):
                 target.hurt(self)
-                # Always apply at least 1 poison damage per tick
-                poison_damage = max(1, round(self.damage / 2))
-                target.dot(poison_damage, self.poison_duration)
+                poison_level = max(1, round(self.damage / 6))
+                effects_mod.apply_effect(target, "poisoned", self.poison_duration, poison_level)
                 self.pierce -= 1
                 if self.pierce <= 0:
                     return True  # Bullet should be removed
