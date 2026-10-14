@@ -69,8 +69,12 @@ class PlayerBody(Entity):
         self.gun.update()
         super().move()
         
-    def hurt(self, enemy):
+    def hurt(self, enemy, direct_damage=False):
         if self.iframes > 0:
+            return
+        if direct_damage:
+            self.health -= enemy
+            self.iframes = 30
             return
         
         if (isinstance(self.gun, Blade) 
@@ -191,11 +195,11 @@ class Retribution(PlayerBody):
         self.retribution = True
         self.rage_time = 0
     
-    def hurt(self, enemy):
+    def hurt(self, enemy, direct_damage=False):
         if self.iframes <= 0:
             if self.body_effect_unlocked:
                 self.rage()
-            super().hurt(enemy)
+            super().hurt(enemy, direct_damage=direct_damage)
             if self.retribution:
                 def fire_retribution_shot(direction):
                     if isinstance(self.gun, Blade):
@@ -516,6 +520,8 @@ def apply_level_progression(player, level):
             descrip = "Blowdart shots poison longer."
         elif isinstance(player.gun, Blade):
             descrip = "Timed sword swings can \nblock incoming damage."
+        elif isinstance(player.gun, Flamethrower):
+            descrip = "Flamethrower now fires faster and wider."
         else:
             descrip = f"{get_gun_name(player)} unlocked \nits special effect."
         events.append({
@@ -577,7 +583,7 @@ def create_player(body_name, x, y, size=20, health=10):
 
 
 def equip_gun(player, gun_name):
-    gun_class = GUN_TYPES.get(gun_name, Cannon)
+    gun_class = GUN_TYPES.get(gun_name, Shotgun)
     player.gun = gun_class(player)
     return player
 

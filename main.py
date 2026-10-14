@@ -161,6 +161,7 @@ def _create_enemy_by_name(enemy_name, tick_value, position=None):
         "Turret": enemy_file.Turret,
         "Chaser": enemy_file.Chaser,
         "Shatterking": enemy_file.Shatterking,
+        "Freezer": enemy_file.Freezer,
     }
 
     enemy = create_enemy_map.get(enemy_name, enemy_file.Chaser)(spawn_x, spawn_y, spawn_time)
@@ -199,38 +200,42 @@ def _tutorial_levels():
 
 
 def _roll_wave_enemy_name(tick_value, allow_early_spiker=False):
-    temp = random.randint(0, 19)
+    temp = random.randint(0, 28)
     if temp <= 6:
         return "Chaser"
-    if temp in (7, 8):
+    if temp in (7, 8, 9):
         return "Dasher"
-    if temp in (9, 10):
+    if temp in (10, 11 ,12):
         return "Blaster"
-    if temp in (11, 12):
+    if temp in (13, 14, 15):
         return "Ghost"
-    if temp in (13, 14):
+    if temp in (16, 17, 18):
         if tick_value > 1000:
             return "Turret"
         return "Chaser"
-    if temp == 15:
+    if temp == 19:
         if tick_value > 1800:
             return "Commander"
         return "Chaser"
-    if temp == 16:
+    if temp in (20, 21):
         if allow_early_spiker or tick_value > 2400:
             return "Spiker"
         return "Chaser"
-    if temp == 17:
+    if temp in (22, 23):
         if tick_value > 3000:
             return "Guardian"
         return "Chaser"
-    if temp == 18:
+    if temp in (24, 25):
         if tick_value > 3600:
             return "Warper"
         return "Chaser"
-    if temp == 19:
+    if temp == 26:
         if tick_value > 4200:
             return "Shatterking"
+        return "Chaser"
+    if temp in (27, 28):
+        if tick_value > 3600:
+            return "Freezer"
         return "Chaser"
     return "Chaser"
 

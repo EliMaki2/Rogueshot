@@ -159,6 +159,13 @@ class Enemy:
         self.walls = []
         apply_haunting(self)
         self.type = "enemy"
+        self.iceshock_point = None
+        self.iceshock_radius = 30
+        self.iceshock_cooldown = 0
+        self.iceshock_length = 90
+        self.max_iceshock_cooldown = 250
+        self.iceshock_charge = 0
+        self.iceshock_max_charge = 60
     
     def hurt(self, bullet, direct_damage=False):
         if direct_damage:
@@ -391,6 +398,8 @@ class Enemy:
             self.dash_time -= 1
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
+        if self.iceshock_cooldown > 0:
+            self.iceshock_cooldown -= 1
         self.x += self.velocity.x
         self.y += self.velocity.y
         self.velocity = self.velocity.multiply(friction)  # Friction
@@ -873,6 +882,30 @@ class Enemy:
             bullet.collide(player)
         self.bullets = [b for b in self.bullets if not b.remove]
 
+    def ability_iceshock_create(self, player):
+        if self.iceshock_cooldown == 0:
+            self.iceshock_point = (player.x, player.y)
+            self.iceshock_charge = self.iceshock_max_charge
+
+    def ability_iceshock_update(self, player):
+        if self.iceshock_point is None:
+            return
+        if self.iceshock_charge > 0:
+            self.iceshock_charge -= 1
+        else:
+            if (player.x - self.iceshock_point[0]) ** 2 + (player.y - self.iceshock_point[1]) ** 2 < self.iceshock_radius ** 2:
+                effects_mod.apply_effect(player, "frozen", duration=self.iceshock_length, level=1)
+            self.iceshock_point = None
+            self.iceshock_charge = 0
+            self.iceshock_cooldown = self.max_iceshock_cooldown
+
+    def ability_iceshock_draw(self, screen):
+        if self.iceshock_point is None:
+            return
+        progress = self.iceshock_charge / self.max_iceshock_charge
+        pygame.draw.circle(screen, (0, 50, 150), (int(self.iceshock_point[0]), int(self.iceshock_point[1])), self.iceshock_radius)
+        pygame.draw.circle(screen, (0, 150, 255), (int(self.iceshock_point[0]), int(self.iceshock_point[1])), self.iceshock_radius, 2)
+        pygame.draw.circle(screen, (100, 100, 200), (int(self.iceshock_point[0]), int(self.iceshock_point[1])), round(self.iceshock_radius * progress))
 
 class Bullet:
     def __init__(self, x, y, direction, damage, speed=5, owner=None):
@@ -1092,6 +1125,7 @@ class Commander(Enemy):
         super().__init__(x, y, 30, (200, 50, 50), health, damage, 1)
         self.spawn_time = 0
         self.time = time/2
+        self.type = "boss"
     
     def move(self):
         super().move(friction=0.9)
@@ -1198,27 +1232,22 @@ class Shatterking(Enemy):
         self.laser_length = 360
         self.laser_damage_done = False
         self.fired_lasers = 0
-        self.warped = False
         self.harmed_during_laser = False
         self.spawn_time = 0
         self.type = "boss"
 
     def target(self, player):
-        if self.warped == False:
-            if self.ability_warp_target_step(player, engage_distance=500, charge_frames=40, cooldown_frames=300, overshoot=30):
-                self.warped = True
+        if self.ability_warp_target_step(player, engage_distance=500, charge_frames=40, cooldown_frames=300, overshoot=30):
+            return
+        if self.fired_lasers >= 3:
+            self.fired_lasers = 0
+            if self.harmed_during_laser:
+                self.ability_spawn_minion_wave(30, 1, 60, 10, "Spiker")
+            self.harmed_during_laser = False
+        if self.fired_lasers < 3:
+            if self.ability_laser_target_step(player, engage_distance=360, charge_frames=36, beam_frames=12, cooldown_frames=30):
+                self.fired_lasers += 1
                 return
-        else:
-            if self.fired_lasers >= 3:
-                self.fired_lasers = 0
-                self.warped = False
-                if self.harmed_during_laser:
-                    self.ability_spawn_minion_wave(30, 1, 60, 10, "Spiker")
-                self.harmed_during_laser = False
-            if self.fired_lasers < 3:
-                if self.ability_laser_target_step(player, engage_distance=360, charge_frames=36, beam_frames=12, cooldown_frames=30):
-                    self.fired_lasers += 1
-                    return
         super().target(player)
         self.hit(player)
 
@@ -1249,3 +1278,40 @@ class Shatterking(Enemy):
             pygame.draw.line(screen, (255, 120, 120), (int(self.x), int(self.y)), (int(end_x), int(end_y)), 8)
             pygame.draw.line(screen, (255, 230, 120), (int(self.x), int(self.y)), (int(end_x), int(end_y)), 4)
             pygame.draw.circle(screen, (255, 240, 200), (int(self.x), int(self.y)), self.size + 4, 1)
+
+class Freezer(Enemy):
+    def __init__(self, x, y, time):
+        health = _scaled_health(20, time)
+        damage = 1 + time/3000
+        super().__init__(x, y, 15, (100, 150, 255), health, damage, 0.9)
+        self.iceshock_radius = 40
+        self.iceshock_length = 60
+        self.iceshock_charge = 0
+        self.iceshock_cooldown = 0
+        self.iceshock_point = None
+        self.max_iceshock_cooldown = 300
+        self.max_iceshock_charge = 60
+
+    def target(self, player):
+        super().target(player)
+        self.hit(player)
+        if self.distance_to(player) <= 420 and self.iceshock_point is None:
+            self.ability_iceshock_create(player)
+        self.ability_iceshock_update(player)
+
+    def move(self):
+        if self.iceshock_charge != 0:
+            super().move(friction=0.96)
+            self.collide()
+            return
+        super().move(friction=0.9)
+        self.collide()
+
+    def draw(self, screen):
+        super().draw(screen)
+        if self.iceshock_charge != 0:
+            end_x, end_y = self.iceshock_point
+            pygame.draw.line(screen, (100, 100, 200), (int(self.x), int(self.y)), (int(end_x), int(end_y)), 4)
+            pygame.draw.circle(screen, (150, 220, 255), (int(self.x), int(self.y)), self.size + 3, 1)
+            self.ability_iceshock_draw(screen)
+
