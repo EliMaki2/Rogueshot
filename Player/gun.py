@@ -352,10 +352,18 @@ class Flamethrower(Gun):
     def _spawn_pending(self):
         o = self.owner
         if self.pending_fire:
-            _, bullets, velocity, damage = self.pending_fire.pop(0)
-            fire = Fire(o.x, o.y, velocity, damage, o.pierce, o.attack_range, 5, o.bullet_color, o.knockback)
-            fire.age = random.randint(0, 3)
-            bullets.append(fire)
+            if getattr(o, "gun_effect_unlocked", False):
+                fire_amount = 5
+            else:
+                fire_amount = 1
+            for _ in range(fire_amount):
+                try:
+                    _, bullets, velocity, damage = self.pending_fire.pop(0)
+                    fire = Fire(o.x, o.y, velocity, damage, o.pierce, o.attack_range, 5, o.bullet_color, o.knockback)
+                    fire.age = random.randint(0, 3)
+                    bullets.append(fire)
+                except IndexError:
+                    break
 
     def update(self):
         super().update()

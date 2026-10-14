@@ -159,6 +159,7 @@ def _create_enemy_by_name(enemy_name, tick_value, position=None):
         "Warper": enemy_file.Warper,
         "Turret": enemy_file.Turret,
         "Chaser": enemy_file.Chaser,
+        "Shatterking": enemy_file.Shatterking,
     }
 
     enemy = create_enemy_map.get(enemy_name, enemy_file.Chaser)(spawn_x, spawn_y, spawn_time)
@@ -197,7 +198,7 @@ def _tutorial_levels():
 
 
 def _roll_wave_enemy_name(tick_value, allow_early_spiker=False):
-    temp = random.randint(0, 18)
+    temp = random.randint(0, 19)
     if temp <= 6:
         return "Chaser"
     if temp in (7, 8):
@@ -225,6 +226,10 @@ def _roll_wave_enemy_name(tick_value, allow_early_spiker=False):
     if temp == 18:
         if tick_value > 3600:
             return "Warper"
+        return "Chaser"
+    if temp == 19:
+        if tick_value > 4200:
+            return "Shatterking"
         return "Chaser"
     return "Chaser"
 

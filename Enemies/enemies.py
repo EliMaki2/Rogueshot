@@ -685,23 +685,36 @@ class Enemy:
         self.collide()
         return True
 
-    def ability_spawn_minion_wave(self, time_scale, spawn_count=3, spread=50, cooldown_frames=120):
+    def ability_spawn_minion_wave(self, time_scale, spawn_count=3, spread=50, cooldown_frames=120, type=None):
         if self.spawn_time > 0:
             self.spawn_time -= 1
             return
         for i in range(spawn_count):
             spawn_x = self.x + random.randint(-spread, spread)
             spawn_y = self.y + random.randint(-spread, spread)
-            if random.random() < 0.5:
-                Chaser(spawn_x, spawn_y, time_scale)
-            else:
-                temp = random.randint(0, 2)
-                if temp == 0:
+            if type is not None:
+                if type == "Chaser":
+                    Chaser(spawn_x, spawn_y, time_scale)
+                elif type == "Dasher":
                     Dasher(spawn_x, spawn_y, time_scale)
-                elif temp == 1:
+                elif type == "Blaster":
                     Blaster(spawn_x, spawn_y, time_scale)
-                else:
+                elif type == "Ghost":
                     Ghost(spawn_x, spawn_y, time_scale)
+                elif type == "Spiker":
+                    Spiker(spawn_x, spawn_y, time_scale)
+
+            else:
+                if random.random() < 0.5:
+                    Chaser(spawn_x, spawn_y, time_scale)
+                else:
+                    temp = random.randint(0, 2)
+                    if temp == 0:
+                        Dasher(spawn_x, spawn_y, time_scale)
+                    elif temp == 1:
+                        Blaster(spawn_x, spawn_y, time_scale)
+                    else:
+                        Ghost(spawn_x, spawn_y, time_scale)
         self.spawn_time = cooldown_frames
 
     # ------------------------------------------------------------------ #
@@ -1189,3 +1202,70 @@ class Turret(Enemy):
     def draw(self, screen):
         super().draw(screen)
         self.ability_shoot_draw(screen)
+
+class Shatterking(Enemy):
+    #boss enemy, warps twoards player then fires lasers in a set of three. if not hit when firing, it will spawn two spikers.
+    def __init__(self, x, y, time=1):
+        health = _scaled_health(50, time)
+        damage = 3 + time/2000
+        super().__init__(x, y, 35, (255, 100, 170), health, damage, 0.9)
+        self.warp_carry_radius = self.size * 5
+        self.warp_charge = -1
+        self.warp_cooldown = 0
+        self.laser_charge = -1
+        self.laser_time = 0
+        self.laser_cooldown = 0
+        self.laser_direction = Vector(1, 0)
+        self.laser_length = 360
+        self.laser_damage_done = False
+        self.fired_lasers = 0
+        self.warped = False
+        self.harmed_during_laser = False
+        self.spawn_time = 0
+
+    def target(self, player):
+        if self.warped == False:
+            if self.ability_warp_target_step(player, engage_distance=500, charge_frames=40, cooldown_frames=300, overshoot=30):
+                self.warped = True
+                return
+        else:
+            if self.fired_lasers >= 3:
+                self.fired_lasers = 0
+                self.warped = False
+                if self.harmed_during_laser:
+                    self.ability_spawn_minion_wave(30, 2, 60, 10, "Spiker")
+                self.harmed_during_laser = False
+            if self.fired_lasers < 3:
+                if self.ability_laser_target_step(player, engage_distance=360, charge_frames=36, beam_frames=12, cooldown_frames=30):
+                    self.fired_lasers += 1
+                    return
+        super().target(player)
+        self.hit(player)
+
+    def hurt(self, damage):
+        super().hurt(damage)
+        if self.fired_lasers > 0:
+            self.harmed_during_laser = True
+
+    def move(self):
+        if self.warp_charge != -1:
+            super().move(friction=0.96)
+            self.collide()
+            return
+        if self.ability_laser_move_step(active_friction=0.92):
+            return
+        super().move(friction=0.9)
+        self.collide()
+
+    def draw(self, screen):
+        super().draw(screen)
+        self.ability_warp_draw(screen)
+        if self.laser_charge >= 0:
+            end_x, end_y = self.ability_laser_end()
+            pygame.draw.line(screen, (180, 255, 200), (int(self.x), int(self.y)), (int(end_x), int(end_y)), 4)
+            pygame.draw.circle(screen, (220, 255, 230), (int(self.x), int(self.y)), self.size + 3, 1)
+        elif self.laser_time > 0:
+            end_x, end_y = self.ability_laser_end()
+            pygame.draw.line(screen, (255, 120, 120), (int(self.x), int(self.y)), (int(end_x), int(end_y)), 8)
+            pygame.draw.line(screen, (255, 230, 120), (int(self.x), int(self.y)), (int(end_x), int(end_y)), 4)
+            pygame.draw.circle(screen, (255, 240, 200), (int(self.x), int(self.y)), self.size + 4, 1)
