@@ -1,0 +1,234 @@
+{
+  "name": "tutorial_shooting",
+  "player_start": [
+    151,
+    294
+  ],
+  "enemy_spawning": {
+    "mode": "default"
+  },
+  "walls": [
+    [
+      [
+        189,
+        237
+      ],
+      [
+        303,
+        237
+      ],
+      [
+        303,
+        335
+      ],
+      [
+        189,
+        335
+      ]
+    ]
+  ],
+  "enemy_markers": [
+    {
+      "x": 849,
+      "y": 303,
+      "walls": [],
+      "zones": [],
+      "ends_tutorial": true,
+      "enemy": "Chaser"
+    }
+  ],
+  "tutorial": {
+    "active": true,
+    "name": "Shooting",
+    "description": "Learn how to fire your gun. Hold the arrow keys to shoot in that direction, and hold two arrows together to shoot diagonally. Hit all targets to finish.",
+    "body": "Dasher",
+    "gun": "Shotgun",
+    "health": 10,
+    "intro": "Use the arrow keys to shoot",
+    "goal": "reach",
+    "duration": 600,
+    "outer_wall_exp": true,
+    "waves": [],
+    "levels": [],
+    "icon": [
+      "ffffffffffffffff",
+      "ffffffffffffffff",
+      "ffffffffffffffff",
+      "ffffff4444ffffff",
+      "fffff44ff44fffff",
+      "ffffffffffffffff",
+      "fffffff44fffffff",
+      "ffffff4444ffffff",
+      "ffffff4444ffffff",
+      "fffffff44fffffff",
+      "ffffffffffffffff",
+      "fffff44ff44fffff",
+      "ffffff4444ffffff",
+      "ffffffffffffffff",
+      "ffffffffffffffff",
+      "ffffffffffffffff"
+    ]
+  },
+  "editor_objects": [
+    {
+      "id": 8,
+      "type": "text",
+      "targets": [],
+      "x": 484,
+      "y": 52,
+      "text": "Use arrow keys to shoot",
+      "size": 28
+    },
+    {
+      "id": 10,
+      "type": "trig_attack",
+      "targets": [
+        15
+      ],
+      "x": 237,
+      "y": 488,
+      "r": 45,
+      "mode": "latch",
+      "pulse_ticks": 30,
+      "fulfilled": false,
+      "count": 1
+    },
+    {
+      "id": 9,
+      "type": "text",
+      "targets": [],
+      "x": 777,
+      "y": 260,
+      "text": "Shoot Here",
+      "size": 28
+    },
+    {
+      "id": 13,
+      "type": "gate",
+      "targets": [
+        9
+      ],
+      "x": 895,
+      "y": 295,
+      "gate": "NOT"
+    },
+    {
+      "id": 15,
+      "type": "gate",
+      "targets": [
+        16,
+        20,
+        19
+      ],
+      "x": 166,
+      "y": 244,
+      "gate": "AND"
+    },
+    {
+      "id": 16,
+      "type": "gate",
+      "targets": [
+        18
+      ],
+      "x": 290,
+      "y": 240,
+      "gate": "NOT"
+    },
+    {
+      "id": 18,
+      "type": "gate",
+      "targets": [
+        12,
+        21
+      ],
+      "x": 401,
+      "y": 273,
+      "gate": "AND"
+    },
+    {
+      "id": 20,
+      "type": "text",
+      "targets": [],
+      "x": 491,
+      "y": 161,
+      "text": "Good, now kill the enemy",
+      "size": 28
+    },
+    {
+      "id": 11,
+      "type": "trig_attack",
+      "targets": [
+        15
+      ],
+      "x": 236,
+      "y": 102,
+      "r": 45,
+      "mode": "latch",
+      "pulse_ticks": 30,
+      "fulfilled": false,
+      "count": 1
+    },
+    {
+      "id": 12,
+      "type": "text",
+      "targets": [],
+      "x": 254,
+      "y": 171,
+      "text": "Now hit both of these",
+      "size": 28
+    },
+    {
+      "id": 21,
+      "type": "text",
+      "targets": [],
+      "x": 249,
+      "y": 420,
+      "text": "Now hit both of these",
+      "size": 28
+    },
+    {
+      "id": 22,
+      "type": "wall_rect",
+      "targets": [],
+      "x1": 189,
+      "y1": 237,
+      "x2": 303,
+      "y2": 335
+    },
+    {
+      "id": 19,
+      "type": "spawn_point",
+      "targets": [
+        23
+      ],
+      "x": 849,
+      "y": 303,
+      "enemy": "Chaser"
+    },
+    {
+      "id": 7,
+      "type": "trig_attack",
+      "targets": [
+        13,
+        18,
+        22
+      ],
+      "x": 782,
+      "y": 309,
+      "r": 32.0,
+      "mode": "latch",
+      "pulse_ticks": 30,
+      "fulfilled": false,
+      "count": 1
+    },
+    {
+      "id": 23,
+      "type": "level_end",
+      "targets": [],
+      "x": 878,
+      "y": 448,
+      "r": 30,
+      "delay_ticks": 10
+    }
+  ]
+}

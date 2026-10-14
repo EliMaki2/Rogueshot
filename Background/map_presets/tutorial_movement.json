@@ -1,0 +1,253 @@
+{
+  "name": "tutorial_movement",
+  "player_start": [
+    159,
+    316
+  ],
+  "enemy_spawning": {
+    "mode": "default"
+  },
+  "walls": [
+    [
+      [
+        281,
+        262
+      ],
+      [
+        415,
+        262
+      ],
+      [
+        415,
+        370
+      ],
+      [
+        281,
+        370
+      ]
+    ],
+    [
+      [
+        509,
+        372
+      ],
+      [
+        555,
+        372
+      ],
+      [
+        555,
+        625
+      ],
+      [
+        509,
+        625
+      ]
+    ],
+    [
+      [
+        511,
+        0
+      ],
+      [
+        552,
+        0
+      ],
+      [
+        552,
+        264
+      ],
+      [
+        511,
+        264
+      ]
+    ],
+    [
+      [
+        634,
+        268
+      ],
+      [
+        766,
+        268
+      ],
+      [
+        766,
+        373
+      ],
+      [
+        634,
+        373
+      ]
+    ]
+  ],
+  "goals": [
+    {
+      "x": 146,
+      "y": 319,
+      "walls": [],
+      "zones": [],
+      "ends_tutorial": true,
+      "radius": 45
+    },
+    {
+      "x": 892,
+      "y": 319,
+      "walls": [
+        1,
+        2
+      ],
+      "zones": [],
+      "ends_tutorial": false,
+      "radius": 50
+    }
+  ],
+  "tutorial": {
+    "active": true,
+    "name": "Movement",
+    "description": "Learn how to move around the arena. Use W, A, S and D to move your character. Reach the glowing zone to finish.",
+    "body": "Dasher",
+    "gun": "Shotgun",
+    "health": 10,
+    "intro": "Use W A S D to move",
+    "goal_text": "Reach the glowing zone",
+    "goal": "reach",
+    "duration": 600,
+    "spawns": [],
+    "outer_wall_exp": true,
+    "waves": [],
+    "levels": [],
+    "icon": [
+      "ffffffffffffffff",
+      "ffffffffffffffff",
+      "ffffffffffffffff",
+      "ffffffffff222fff",
+      "ffffffff2232ffff",
+      "ffffff222322ffff",
+      "ffffff223222ffff",
+      "ffffff22322fffff",
+      "fffff223222fffff",
+      "fffff232222fffff",
+      "fffff322ffffffff",
+      "ffff3fffffffffff",
+      "fff3ffffffffffff",
+      "fff3ffffffffffff",
+      "ffffffffffffffff",
+      "ffffffffffffffff"
+    ]
+  },
+  "editor_objects": [
+    {
+      "id": 1,
+      "type": "wall_rect",
+      "targets": [],
+      "x1": 281,
+      "y1": 262,
+      "x2": 415,
+      "y2": 370
+    },
+    {
+      "id": 2,
+      "type": "wall_rect",
+      "targets": [],
+      "x1": 509,
+      "y1": 372,
+      "x2": 555,
+      "y2": 625
+    },
+    {
+      "id": 3,
+      "type": "wall_rect",
+      "targets": [],
+      "x1": 511,
+      "y1": 0,
+      "x2": 552,
+      "y2": 264
+    },
+    {
+      "id": 4,
+      "type": "wall_rect",
+      "targets": [],
+      "x1": 634,
+      "y1": 268,
+      "x2": 766,
+      "y2": 373
+    },
+    {
+      "id": 6,
+      "type": "trig_move",
+      "targets": [
+        7
+      ],
+      "x": 146,
+      "y": 319,
+      "r": 45,
+      "mode": "latch",
+      "pulse_ticks": 30,
+      "fulfilled": false
+    },
+    {
+      "id": 8,
+      "type": "text",
+      "targets": [],
+      "x": 892,
+      "y": 383,
+      "text": "Move Here",
+      "size": 28
+    },
+    {
+      "id": 5,
+      "type": "trig_move",
+      "targets": [
+        2,
+        3,
+        6,
+        10,
+        11
+      ],
+      "x": 892.0,
+      "y": 319.0,
+      "r": 50.44799302251776,
+      "mode": "latch",
+      "pulse_ticks": 30,
+      "fulfilled": false
+    },
+    {
+      "id": 10,
+      "type": "gate",
+      "targets": [
+        8
+      ],
+      "x": 766,
+      "y": 466,
+      "gate": "NOT"
+    },
+    {
+      "id": 11,
+      "type": "text",
+      "targets": [],
+      "x": 154,
+      "y": 412,
+      "text": "Move Here",
+      "size": 28
+    },
+    {
+      "id": 9,
+      "type": "text",
+      "targets": [],
+      "x": 242,
+      "y": 74,
+      "text": "Use W, A, S, D to move the player",
+      "size": 28
+    },
+    {
+      "id": 7,
+      "type": "level_end",
+      "targets": [],
+      "x": 357,
+      "y": 180,
+      "r": 39.05124837953327,
+      "delay_ticks": 10
+    }
+  ]
+}

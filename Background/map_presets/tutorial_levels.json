@@ -1,0 +1,239 @@
+{
+  "name": "tutorial_levels",
+  "player_start": [
+    498,
+    282
+  ],
+  "enemy_spawning": {
+    "mode": "default"
+  },
+  "walls": [
+    [
+      [
+        161,
+        167
+      ],
+      [
+        346,
+        167
+      ],
+      [
+        346,
+        196
+      ],
+      [
+        161,
+        196
+      ]
+    ],
+    [
+      [
+        160,
+        373
+      ],
+      [
+        345,
+        373
+      ],
+      [
+        345,
+        402
+      ],
+      [
+        160,
+        402
+      ]
+    ],
+    [
+      [
+        650,
+        166
+      ],
+      [
+        835,
+        166
+      ],
+      [
+        835,
+        195
+      ],
+      [
+        650,
+        195
+      ]
+    ],
+    [
+      [
+        650,
+        378
+      ],
+      [
+        835,
+        378
+      ],
+      [
+        835,
+        407
+      ],
+      [
+        650,
+        407
+      ]
+    ]
+  ],
+  "enemy_markers": [
+    {
+      "x": 224,
+      "y": 284,
+      "walls": [],
+      "zones": [],
+      "ends_tutorial": true,
+      "enemy": "Chaser"
+    }
+  ],
+  "tutorial": {
+    "active": true,
+    "waves": [],
+    "levels": [
+      {
+        "exp": 10,
+        "cards": [
+          "Extra Barrel",
+          "Tough Skin",
+          "Sharp Bullets"
+        ]
+      }
+    ],
+    "exp": true,
+    "outer_wall_exp": false,
+    "icon": [
+      "ffffffffffffffff",
+      "ffffffffffffffff",
+      "ffffffffffffffff",
+      "fffffff88fffffff",
+      "fffffff88fffffff",
+      "ffffff8888ffffff",
+      "ffffff8888ffffff",
+      "fffff888888fffff",
+      "fffff888888fffff",
+      "ffff88888888ffff",
+      "ffff88888888ffff",
+      "fff8888888888fff",
+      "fff8888888888fff",
+      "fff8888888888fff",
+      "ffffffffffffffff",
+      "ffffffffffffffff"
+    ],
+    "name": "Leveling",
+    "description": "A tutorial showing how to level up ",
+    "body": "Dasher",
+    "gun": "Blowdart",
+    "health": 10
+  },
+  "editor_objects": [
+    {
+      "id": 1,
+      "type": "wall_rect",
+      "targets": [],
+      "x1": 161,
+      "y1": 167,
+      "x2": 346,
+      "y2": 196
+    },
+    {
+      "id": 2,
+      "type": "wall_rect",
+      "targets": [],
+      "x1": 160,
+      "y1": 373,
+      "x2": 345,
+      "y2": 402
+    },
+    {
+      "id": 4,
+      "type": "wall_rect",
+      "targets": [],
+      "x1": 650,
+      "y1": 166,
+      "x2": 835,
+      "y2": 195
+    },
+    {
+      "id": 3,
+      "type": "wall_rect",
+      "targets": [],
+      "x1": 650,
+      "y1": 378,
+      "x2": 835,
+      "y2": 407
+    },
+    {
+      "id": 7,
+      "type": "text",
+      "targets": [],
+      "x": 501,
+      "y": 482,
+      "text": "Grab this EXP",
+      "size": 28
+    },
+    {
+      "id": 6,
+      "type": "exp_spawner",
+      "targets": [],
+      "x": 496,
+      "y": 541,
+      "amount": 5,
+      "count": 2
+    },
+    {
+      "id": 8,
+      "type": "level_trigger",
+      "targets": [
+        10,
+        11,
+        12
+      ],
+      "x": 497,
+      "y": 435,
+      "level": 2
+    },
+    {
+      "id": 10,
+      "type": "spawn_point",
+      "targets": [
+        13
+      ],
+      "x": 224,
+      "y": 284,
+      "enemy": "Chaser"
+    },
+    {
+      "id": 11,
+      "type": "gate",
+      "targets": [
+        7
+      ],
+      "x": 619,
+      "y": 479,
+      "gate": "NOT"
+    },
+    {
+      "id": 12,
+      "type": "text",
+      "targets": [],
+      "x": 496,
+      "y": 185,
+      "text": "Enemies drop EXP too",
+      "size": 28
+    },
+    {
+      "id": 13,
+      "type": "level_end",
+      "targets": [],
+      "x": 735,
+      "y": 277,
+      "r": 30,
+      "delay_ticks": 50
+    }
+  ]
+}

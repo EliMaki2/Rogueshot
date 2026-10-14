@@ -1,0 +1,152 @@
+{
+  "name": "forest",
+  "player_start": [
+    500,
+    312
+  ],
+  "enemy_spawning": {
+    "mode": "default"
+  },
+  "walls": [],
+  "tutorial": {
+    "active": false
+  },
+  "editor_objects": [
+    {
+      "id": 2,
+      "type": "wall_circle",
+      "targets": [],
+      "x": 318,
+      "y": 424,
+      "r": 42.01190307520001
+    },
+    {
+      "id": 4,
+      "type": "wall_circle",
+      "targets": [],
+      "x": 208,
+      "y": 156,
+      "r": 86.05230967266364
+    },
+    {
+      "id": 5,
+      "type": "wall_circle",
+      "targets": [],
+      "x": 78.05230967266363,
+      "y": 280,
+      "r": 20.047701848224627
+    },
+    {
+      "id": 6,
+      "type": "wall_circle",
+      "targets": [],
+      "x": 115.05230967266363,
+      "y": 464,
+      "r": 39.06305904347599
+    },
+    {
+      "id": 1,
+      "type": "wall_circle",
+      "targets": [],
+      "x": 224,
+      "y": 333,
+      "r": 24.020824298928627
+    },
+    {
+      "id": 7,
+      "type": "wall_circle",
+      "targets": [],
+      "x": 404,
+      "y": 39,
+      "r": 24.020824298928627
+    },
+    {
+      "id": 8,
+      "type": "wall_circle",
+      "targets": [],
+      "x": 595,
+      "y": 138,
+      "r": 71.02816342831905
+    },
+    {
+      "id": 3,
+      "type": "wall_circle",
+      "targets": [],
+      "x": 389,
+      "y": 217,
+      "r": 38.0
+    },
+    {
+      "id": 9,
+      "type": "wall_circle",
+      "targets": [],
+      "x": 270,
+      "y": 587.0,
+      "r": 38.0
+    },
+    {
+      "id": 10,
+      "type": "wall_circle",
+      "targets": [],
+      "x": 523,
+      "y": 501,
+      "r": 80.02499609497022
+    },
+    {
+      "id": 11,
+      "type": "wall_circle",
+      "targets": [],
+      "x": 713,
+      "y": 426,
+      "r": 18.35755975068582
+    },
+    {
+      "id": 12,
+      "type": "wall_circle",
+      "targets": [],
+      "x": 815,
+      "y": 489,
+      "r": 30.066592756745816
+    },
+    {
+      "id": 13,
+      "type": "wall_circle",
+      "targets": [],
+      "x": 877,
+      "y": 353,
+      "r": 66.12110101926616
+    },
+    {
+      "id": 14,
+      "type": "wall_circle",
+      "targets": [],
+      "x": 766,
+      "y": 203,
+      "r": 25.019992006393608
+    },
+    {
+      "id": 16,
+      "type": "wall_circle",
+      "targets": [],
+      "x": 703,
+      "y": 267,
+      "r": 13.0
+    },
+    {
+      "id": 17,
+      "type": "wall_circle",
+      "targets": [],
+      "x": 789,
+      "y": 93,
+      "r": 40.01249804748511
+    },
+    {
+      "id": 15,
+      "type": "wall_circle",
+      "targets": [],
+      "x": 907,
+      "y": 148,
+      "r": 16.492422502470642
+    }
+  ]
+}

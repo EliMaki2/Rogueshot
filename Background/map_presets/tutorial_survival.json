@@ -1,0 +1,174 @@
+{
+  "name": "tutorial_survival",
+  "player_start": [
+    503,
+    316
+  ],
+  "enemy_spawning": {
+    "mode": "default"
+  },
+  "walls": [],
+  "tutorial": {
+    "active": true,
+    "name": "Survival",
+    "description": "Enemies arrive in waves and will chase you down. Keep moving, keep shooting, and stay alive for three waves.",
+    "body": "Dasher",
+    "gun": "Shotgun",
+    "health": 10,
+    "intro": "Move and shoot to survive",
+    "goal_text": "Survive",
+    "goal": "survive",
+    "duration": 600,
+    "waves": [
+      {
+        "Chaser": 3
+      },
+      {
+        "Chaser": 4,
+        "Dasher": 1
+      },
+      {
+        "Chaser": 3,
+        "Dasher": 2,
+        "Blaster": 1
+      }
+    ],
+    "levels": [],
+    "waves_enabled": true,
+    "exp": false,
+    "outer_wall_exp": true,
+    "icon": [
+      "ffffffffffffffff",
+      "ffffffffffffffff",
+      "ffffffffffffffff",
+      "ffffaaffffaaffff",
+      "fffaaaaffaaaafff",
+      "fffaaaaffaaaafff",
+      "fffaaaaaaaaaafff",
+      "fffaaaaaaaaaafff",
+      "ffffaaaaaaaaffff",
+      "ffffaaaaaaaaffff",
+      "fffffaaaaaafffff",
+      "ffffffaaaaffffff",
+      "fffffffaafffffff",
+      "ffffffffffffffff",
+      "ffffffffffffffff",
+      "ffffffffffffffff"
+    ]
+  },
+  "editor_objects": [
+    {
+      "id": 3,
+      "type": "wall_tri",
+      "targets": [],
+      "pts": [
+        [
+          892,
+          263
+        ],
+        [
+          890.5,
+          89.5
+        ],
+        [
+          700,
+          89
+        ]
+      ]
+    },
+    {
+      "id": 2,
+      "type": "wall_tri",
+      "targets": [],
+      "pts": [
+        [
+          699,
+          569
+        ],
+        [
+          893.0,
+          567.0
+        ],
+        [
+          892,
+          370
+        ]
+      ]
+    },
+    {
+      "id": 1,
+      "type": "wall_tri",
+      "targets": [],
+      "pts": [
+        [
+          324,
+          92
+        ],
+        [
+          120,
+          92
+        ],
+        [
+          117,
+          256
+        ]
+      ]
+    },
+    {
+      "id": 4,
+      "type": "wall_tri",
+      "targets": [],
+      "pts": [
+        [
+          121,
+          398
+        ],
+        [
+          121.5,
+          563.5
+        ],
+        [
+          339,
+          562
+        ]
+      ]
+    },
+    {
+      "id": 9,
+      "type": "text",
+      "targets": [],
+      "x": 501,
+      "y": 38,
+      "text": "Survive three waves of enemies to win",
+      "size": 28
+    },
+    {
+      "id": 14,
+      "type": "text",
+      "targets": [],
+      "x": 512,
+      "y": 375,
+      "text": "Enemies come from all the outer walls",
+      "size": 28
+    },
+    {
+      "id": 15,
+      "type": "wave_trigger",
+      "targets": [
+        16
+      ],
+      "x": 455,
+      "y": 199,
+      "wave": 3
+    },
+    {
+      "id": 16,
+      "type": "level_end",
+      "targets": [],
+      "x": 567,
+      "y": 199,
+      "r": 30,
+      "delay_ticks": 50
+    }
+  ]
+}
