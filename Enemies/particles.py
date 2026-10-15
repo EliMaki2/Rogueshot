@@ -20,13 +20,14 @@ class ParticleList(list):
 
 particles = ParticleList()
 
+
 class HitParticle:
     def __init__(self, x, y, size, color):
         self.x = x
         self.y = y
         self.size = size
         self.color = color
-        self.direction = Vector(0,0)
+        self.direction = Vector(0, 0)
 
     def move(self):
         self.x += self.direction.x
@@ -35,9 +36,11 @@ class HitParticle:
         self.direction.x += random.uniform(-0.6, 0.6)
         self.direction.y += random.uniform(-0.6, 0.6)
         return self.size >= 1
-    
+
     def draw(self, screen):
-        pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), int(self.size))
+        pygame.draw.circle(
+            screen, self.color, (int(self.x), int(self.y)), int(self.size)
+        )
 
     def remove(self):
         self.size = 0

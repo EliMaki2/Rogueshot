@@ -10,6 +10,7 @@ driven by it:
   wave / level triggers            on once the chosen tutorial wave is beaten / the player reaches the chosen level
   exp spawners                     drop permanent exp orbs once a linked source is on (at start if unlinked)
 """
+
 import math
 import random
 import pygame
@@ -58,7 +59,9 @@ class MapRuntime:
         self.create_enemy = create_enemy
         self.create_wave_enemy = create_wave_enemy or create_enemy
         tutorial = preset.tutorial if preset.tutorial.get("active") else {}
-        self.waves = list(tutorial.get("waves", [])) if tutorial.get("waves_enabled") else []
+        self.waves = (
+            list(tutorial.get("waves", [])) if tutorial.get("waves_enabled") else []
+        )
         self.waves_enabled = bool(self.waves)
         self.wave_groups = []
         self.waves_beaten = set()
@@ -86,8 +89,18 @@ class MapRuntime:
         kind = obj["type"]
         if kind in TRIGGER_TYPES:
             fulfilled = bool(obj.get("fulfilled", False))
-            pulse = max(1, int(obj.get("pulse_ticks", 30))) if fulfilled and obj.get("mode") == "pulse" else 0
-            self.state[oid] = {"progress": 0, "fulfilled": fulfilled, "pulse": pulse, "inside": False, "seen": set()}
+            pulse = (
+                max(1, int(obj.get("pulse_ticks", 30)))
+                if fulfilled and obj.get("mode") == "pulse"
+                else 0
+            )
+            self.state[oid] = {
+                "progress": 0,
+                "fulfilled": fulfilled,
+                "pulse": pulse,
+                "inside": False,
+                "seen": set(),
+            }
             self.signal[oid] = fulfilled
         elif kind == "spawn_point":
             self.state[oid] = {"was_on": False, "killed": False, "pulse": 0}
@@ -103,9 +116,13 @@ class MapRuntime:
         linked = bool(self.incoming[oid])
         if kind == "wall_rect":
             width, height = (obj["x2"] - obj["x1"]) * h, (obj["y2"] - obj["y1"]) * v
-            self.walls[oid] = walls_file.Wall(obj["x1"] * h, obj["y1"] * v, width, height, not linked, linked)
+            self.walls[oid] = walls_file.Wall(
+                obj["x1"] * h, obj["y1"] * v, width, height, not linked, linked
+            )
         elif kind == "wall_circle":
-            self.walls[oid] = walls_file.CircleWall(obj["x"] * h, obj["y"] * v, obj["r"] * h, not linked, linked)
+            self.walls[oid] = walls_file.CircleWall(
+                obj["x"] * h, obj["y"] * v, obj["r"] * h, not linked, linked
+            )
         elif kind == "wall_tri":
             points = [(p[0] * h, p[1] * v) for p in obj["pts"]]
             self.walls[oid] = walls_file.TriangleWall(points, not linked, linked)
@@ -131,14 +148,21 @@ class MapRuntime:
     @property
     def waves_pending(self):
         """True while tutorial waves are still to be spawned or beaten."""
-        return self.waves_enabled and (len(self.wave_groups) < len(self.waves) or len(self.waves_beaten) < len(self.wave_groups))
+        return self.waves_enabled and (
+            len(self.wave_groups) < len(self.waves)
+            or len(self.waves_beaten) < len(self.wave_groups)
+        )
 
     def active_spawn_zones(self):
         """Enabled spawn zones as editor-space Walls (unscaled)."""
         zones = []
         for oid, o in self.of_type("spawn_zone"):
             if self.is_enabled(oid):
-                zones.append(walls_file.Wall(o["x1"], o["y1"], o["x2"] - o["x1"], o["y2"] - o["y1"]))
+                zones.append(
+                    walls_file.Wall(
+                        o["x1"], o["y1"], o["x2"] - o["x1"], o["y2"] - o["y1"]
+                    )
+                )
         return zones
 
     # ---- per-tick update ----
@@ -173,14 +197,23 @@ class MapRuntime:
                 st["inside"] = False
                 st["seen"] = set()
             elif kind == "trig_move":
-                inside = math.hypot(player.x - cx, player.y - cy) <= radius + player.size
+                inside = (
+                    math.hypot(player.x - cx, player.y - cy) <= radius + player.size
+                )
                 events = 1 if inside and not st["inside"] else 0
                 st["inside"] = inside
             elif kind == "trig_attack":
-                hits = {id(b) for b in bullets if math.hypot(b.x - cx, b.y - cy) <= radius + b.size}
+                hits = {
+                    id(b)
+                    for b in bullets
+                    if math.hypot(b.x - cx, b.y - cy) <= radius + b.size
+                }
                 events = len(hits - st["seen"])
                 st["seen"] = hits
-            elif ability_used and math.hypot(player.x - cx, player.y - cy) <= radius + player.size:
+            elif (
+                ability_used
+                and math.hypot(player.x - cx, player.y - cy) <= radius + player.size
+            ):
                 events = 1
             st["progress"] += events
             if o.get("mode") == "pulse":
@@ -203,20 +236,30 @@ class MapRuntime:
         if not self.waves_enabled:
             return
         for index, group in enumerate(self.wave_groups):
-            if index not in self.waves_beaten and all(e.health <= 0 or e not in enemies for e in group):
+            if index not in self.waves_beaten and all(
+                e.health <= 0 or e not in enemies for e in group
+            ):
                 self.waves_beaten.add(index)
-        zones = [(oid, o) for oid, o in self.of_type("spawn_zone") if o.get("wave_mode")]
+        zones = [
+            (oid, o) for oid, o in self.of_type("spawn_zone") if o.get("wave_mode")
+        ]
         if zones:
             # Wave-mode zones spawn the next wave on each rising edge of their input signal.
             for oid, o in zones:
                 st = self.state[oid]
                 active = self.is_enabled(oid)
-                if active and not st["was_on"] and len(self.wave_groups) < len(self.waves):
+                if (
+                    active
+                    and not st["was_on"]
+                    and len(self.wave_groups) < len(self.waves)
+                ):
                     self._spawn_wave(len(self.wave_groups), o)
                 st["was_on"] = active
             return
         index = len(self.wave_groups)
-        if index >= len(self.waves) or (index > 0 and index - 1 not in self.waves_beaten):
+        if index >= len(self.waves) or (
+            index > 0 and index - 1 not in self.waves_beaten
+        ):
             return
         if self.wave_spawn_tick is None:
             self.wave_spawn_tick = self.tick + (WAVE_GAP_TICKS if index else 0)
@@ -228,12 +271,19 @@ class MapRuntime:
         def position():
             if zone is None:
                 return None
-            return (random.uniform(zone["x1"], zone["x2"]) * self.h, random.uniform(zone["y1"], zone["y2"]) * self.v)
+            return (
+                random.uniform(zone["x1"], zone["x2"]) * self.h,
+                random.uniform(zone["y1"], zone["y2"]) * self.v,
+            )
 
-        self.wave_groups.append([
-            self.create_wave_enemy(name, 100, position())
-            for name, count in self.waves[index].items() for _ in range(count)
-        ])
+        self.wave_groups.append(
+            [
+                self.create_wave_enemy(name, 100, position())
+                for name, count in self.waves[index].items()
+                for _ in range(count)
+            ]
+        )
+
     def _update_progress_triggers(self):
         for oid, o in self.of_type("wave_trigger"):
             st = self.state[oid]
@@ -242,7 +292,9 @@ class MapRuntime:
             self.signal[oid] = st["fulfilled"]
         for oid, o in self.of_type("level_trigger"):
             st = self.state[oid]
-            st["fulfilled"] = st["fulfilled"] or self.level >= max(1, int(o.get("level", 2)))
+            st["fulfilled"] = st["fulfilled"] or self.level >= max(
+                1, int(o.get("level", 2))
+            )
             self.signal[oid] = st["fulfilled"]
 
     def _update_exp_spawners(self):
@@ -254,7 +306,9 @@ class MapRuntime:
             if not rising:
                 continue
             for _ in range(max(1, int(o.get("count", 1)))):
-                drop = drops_file.ExpDrop(o["x"] * self.h, o["y"] * self.v, max(1, int(o.get("amount", 5))))
+                drop = drops_file.ExpDrop(
+                    o["x"] * self.h, o["y"] * self.v, max(1, int(o.get("amount", 5)))
+                )
                 drop.persistent = True
                 drops_file.drops.append(drop)
 
@@ -265,7 +319,12 @@ class MapRuntime:
             # Spawn on every rising edge of the input signal (at start if unlinked).
             if active and not st["was_on"]:
                 self.enemies.setdefault(oid, []).append(
-                    self.create_enemy(o.get("enemy", "Chaser"), 100, (o["x"] * self.h, o["y"] * self.v)))
+                    self.create_enemy(
+                        o.get("enemy", "Chaser"),
+                        100,
+                        (o["x"] * self.h, o["y"] * self.v),
+                    )
+                )
             st["was_on"] = active
             alive = []
             for enemy in self.enemies.get(oid, []):
@@ -290,7 +349,9 @@ class MapRuntime:
             changed = False
             for oid, o in gates:
                 kind = o.get("gate") if o.get("gate") in GATE_TYPES else "AND"
-                value = evaluate_gate(kind, (self.signal[s] for s in self.incoming[oid]))
+                value = evaluate_gate(
+                    kind, (self.signal[s] for s in self.incoming[oid])
+                )
                 if value != self.signal[oid]:
                     self.signal[oid] = value
                     changed = True
@@ -331,13 +392,17 @@ class MapRuntime:
                 pygame.draw.circle(screen, fill, center, radius * 0.6)
             required = int(o.get("count", 1)) if o["type"] != "trig_move" else 1
             if required > 1:
-                label = _font(24 * self.v).render(f"{st['progress']}/{required}", True, (240, 240, 240))
+                label = _font(24 * self.v).render(
+                    f"{st['progress']}/{required}", True, (240, 240, 240)
+                )
                 screen.blit(label, label.get_rect(center=center))
         for oid, o in self.of_type("kill_zone"):
             if not self.is_enabled(oid):
                 continue
             left, top = o["x1"] * self.h, o["y1"] * self.v
-            rect = pygame.Rect(left, top, (o["x2"] - o["x1"]) * self.h, (o["y2"] - o["y1"]) * self.v)
+            rect = pygame.Rect(
+                left, top, (o["x2"] - o["x1"]) * self.h, (o["y2"] - o["y1"]) * self.v
+            )
             color = (200, 80, 255)
             pygame.draw.rect(screen, color, rect, 2)
             pygame.draw.line(screen, color, rect.topleft, rect.bottomright, 1)
@@ -345,8 +410,12 @@ class MapRuntime:
         for oid, o in self.of_type("text"):
             if not self.is_enabled(oid):
                 continue
-            image = _font(o.get("size", 28) * self.v).render(str(o.get("text", "")), True, (230, 230, 230))
-            screen.blit(image, image.get_rect(center=(o["x"] * self.h, o["y"] * self.v)))
+            image = _font(o.get("size", 28) * self.v).render(
+                str(o.get("text", "")), True, (230, 230, 230)
+            )
+            screen.blit(
+                image, image.get_rect(center=(o["x"] * self.h, o["y"] * self.v))
+            )
 
     # ---- suspend / resume ----
     def snapshot(self):

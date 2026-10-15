@@ -2,12 +2,15 @@ import math
 import pygame
 import random
 import Enemies.effects as effects_mod
-from helpers import Vector  
+from helpers import Vector
 
 bullets = []
 
+
 class Bullet:
-    def __init__(self, x, y, velocity, damage, pierce, lifetime, size, color, knockback):
+    def __init__(
+        self, x, y, velocity, damage, pierce, lifetime, size, color, knockback
+    ):
         self.x = x
         self.y = y
         self.velocity = velocity
@@ -19,15 +22,19 @@ class Bullet:
         self.lifetime = lifetime
         self.age = 0
         self.speed = 25
-    
+
     def collides(self, target):
-        return (self.x - target.x) ** 2 + (self.y - target.y) ** 2 < (self.size + target.size) ** 2
+        return (self.x - target.x) ** 2 + (self.y - target.y) ** 2 < (
+            self.size + target.size
+        ) ** 2
 
     def _hits_shield(self, target):
-        return hasattr(target, "ability_shield_contains_point") and target.ability_shield_contains_point(self.x, self.y)
-    
+        return hasattr(
+            target, "ability_shield_contains_point"
+        ) and target.ability_shield_contains_point(self.x, self.y)
+
     def move(self, targets):
-        self.velocity = self.velocity.normalize().multiply(self.speed) 
+        self.velocity = self.velocity.normalize().multiply(self.speed)
         if self.age >= self.lifetime:
             return True  # Bullet should be removed
         self.x += self.velocity.x
@@ -41,18 +48,23 @@ class Bullet:
                 self.pierce -= 1
                 if self.pierce <= 0:
                     return True  # Bullet should be removed
-    
+
     def draw(self, screen):
         pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), self.size)
 
+
 class Poison(Bullet):
-    def __init__(self, x, y, velocity, damage, pierce, lifetime, size, color, knockback):
-        super().__init__(x, y, velocity, damage, pierce, lifetime, size, color, knockback)
-        self.damage = round(self.damage * .75)
+    def __init__(
+        self, x, y, velocity, damage, pierce, lifetime, size, color, knockback
+    ):
+        super().__init__(
+            x, y, velocity, damage, pierce, lifetime, size, color, knockback
+        )
+        self.damage = round(self.damage * 0.75)
         self.poison_duration = 60  # Duration of poison effect in frames
-    
+
     def move(self, targets):
-        self.velocity = self.velocity.normalize().multiply(self.speed) 
+        self.velocity = self.velocity.normalize().multiply(self.speed)
         if self.age >= self.lifetime:
             return True  # Bullet should be removed
         self.x += self.velocity.x
@@ -64,14 +76,22 @@ class Poison(Bullet):
             if self.collides(target):
                 target.hurt(self)
                 poison_level = max(1, round(self.damage / 6))
-                effects_mod.apply_effect(target, "poisoned", self.poison_duration, poison_level)
+                effects_mod.apply_effect(
+                    target, "poisoned", self.poison_duration, poison_level
+                )
                 self.pierce -= 1
                 if self.pierce <= 0:
                     return True  # Bullet should be removed
-    
+
     def draw(self, screen):
         super().draw(screen)
-        pygame.draw.circle(screen, (0, 200, 0), (int(self.x - self.velocity.x), int(self.y - self.velocity.y)), int(self.size * 1.2), 2)
+        pygame.draw.circle(
+            screen,
+            (0, 200, 0),
+            (int(self.x - self.velocity.x), int(self.y - self.velocity.y)),
+            int(self.size * 1.2),
+            2,
+        )
 
 
 class SlashBullet(Bullet):
@@ -92,7 +112,9 @@ class SlashBullet(Bullet):
         base_angle=0,
         sweep_angle=40,
     ):
-        super().__init__(x, y, velocity, damage, pierce, lifetime, size, color, knockback)
+        super().__init__(
+            x, y, velocity, damage, pierce, lifetime, size, color, knockback
+        )
         self.owner = owner
         self.length = max(16, round(length if length is not None else self.size * 6))
         self.height = max(5, round(height if height is not None else self.size * 1.2))
@@ -133,7 +155,9 @@ class SlashBullet(Bullet):
         if seg_len_sq <= 0:
             return False
 
-        proj = ((target.x - anchor_x) * seg_x + (target.y - anchor_y) * seg_y) / seg_len_sq
+        proj = (
+            (target.x - anchor_x) * seg_x + (target.y - anchor_y) * seg_y
+        ) / seg_len_sq
         proj = max(0, min(1, proj))
         closest_x = anchor_x + seg_x * proj
         closest_y = anchor_y + seg_y * proj
@@ -157,7 +181,9 @@ class SlashBullet(Bullet):
         return False
 
     def _swept_collides(self, target, start_angle, end_angle):
-        if self._segment_hits_target(target, start_angle) or self._segment_hits_target(target, end_angle):
+        if self._segment_hits_target(target, start_angle) or self._segment_hits_target(
+            target, end_angle
+        ):
             return True
 
         angle_delta = end_angle - start_angle
@@ -178,7 +204,9 @@ class SlashBullet(Bullet):
         return False
 
     def _swept_hits_shield(self, target, start_angle, end_angle):
-        if self._segment_hits_shield(target, start_angle) or self._segment_hits_shield(target, end_angle):
+        if self._segment_hits_shield(target, start_angle) or self._segment_hits_shield(
+            target, end_angle
+        ):
             return True
 
         angle_delta = end_angle - start_angle
@@ -201,7 +229,11 @@ class SlashBullet(Bullet):
             return True
 
         previous_angle = self.angle
-        progress = 1 if self.lifetime <= 1 else (self.age * self.rotation_speed_multiplier) / (self.lifetime - 1)
+        progress = (
+            1
+            if self.lifetime <= 1
+            else (self.age * self.rotation_speed_multiplier) / (self.lifetime - 1)
+        )
         progress = min(1, progress)
         self._update_pose(progress)
         current_angle = self.angle
@@ -229,65 +261,102 @@ class SlashBullet(Bullet):
 
 
 class Bomb(Bullet):
-    def __init__(self, x, y, velocity, damage, pierce, lifetime, size, color, knockback, fuse=0):
-        super().__init__(x, y, velocity, damage, pierce, lifetime, size, color, knockback)
+    def __init__(
+        self, x, y, velocity, damage, pierce, lifetime, size, color, knockback, fuse=0
+    ):
+        super().__init__(
+            x, y, velocity, damage, pierce, lifetime, size, color, knockback
+        )
         self.lifetime = self.lifetime
-        self.age = fuse + random.randint(0, round(self.lifetime/5))  # Start at a random age to create staggered explosions
+        self.age = fuse + random.randint(
+            0, round(self.lifetime / 5)
+        )  # Start at a random age to create staggered explosions
         self.explosion_radius = 50
         self.explosion_time = 0
         self.blasts = []
-    
+
     def move(self, targets):
         for blast in self.blasts:
             location, damage, blast_age = blast
-            if blast_age < self.explosion_radius/2:
+            if blast_age < self.explosion_radius / 2:
                 for target in targets:
-                    if (target.x - location[0]) ** 2 + (target.y - location[1]) ** 2 < (blast_age + target.size) ** 2:
+                    if (target.x - location[0]) ** 2 + (target.y - location[1]) ** 2 < (
+                        blast_age + target.size
+                    ) ** 2:
                         target.hurt(self)
                 blast_age += 4  # Increase blast age to expand explosion
                 self.blasts.remove(blast)
-                if blast_age < self.explosion_radius/2 - 1:
+                if blast_age < self.explosion_radius / 2 - 1:
                     blast = (location, damage, blast_age)
                     self.blasts.append(blast)
         self.velocity = self.velocity.normalize().multiply(self.speed)
         for target in targets:
-                if hasattr(target, "ability_shield_contains_point") and target.ability_shield_contains_point(self.x, self.y):
-                    return True
-                if self.collides(target):
-                    self.pierce -= 1
-                    if self.pierce <= 0:
-                        self.age = self.lifetime  # Trigger explosion immediately
-                    else:
-                        self.blasts.append(((target.x, target.y), self.damage, 1))  # Store blast for later application
+            if hasattr(
+                target, "ability_shield_contains_point"
+            ) and target.ability_shield_contains_point(self.x, self.y):
+                return True
+            if self.collides(target):
+                self.pierce -= 1
+                if self.pierce <= 0:
+                    self.age = self.lifetime  # Trigger explosion immediately
+                else:
+                    self.blasts.append(
+                        ((target.x, target.y), self.damage, 1)
+                    )  # Store blast for later application
         if self.age >= self.lifetime:
             self.explosion_time += 4
             if self.explosion_time > self.explosion_radius:
                 return True  # Bullet should be removed
             # Create explosion effect
             for target in targets:
-                if (self.x - target.x) ** 2 + (self.y - target.y) ** 2 < (self.explosion_time + target.size) ** 2:
+                if (self.x - target.x) ** 2 + (self.y - target.y) ** 2 < (
+                    self.explosion_time + target.size
+                ) ** 2:
                     target.hurt(self)
         else:
             self.age += 1
-            self.x += self.velocity.x/2
-            self.y += self.velocity.y/2
+            self.x += self.velocity.x / 2
+            self.y += self.velocity.y / 2
             return False
-    
+
     def draw(self, screen):
         if self.age < self.lifetime:
             super().draw(screen)
         else:
-            pygame.draw.circle(screen, (255, 200, 0), (int(self.x), int(self.y)), int(self.explosion_time), 2)
-            pygame.draw.circle(screen, (255, 150, 0), (int(self.x), int(self.y)), int(self.explosion_time + self.size), 4)
+            pygame.draw.circle(
+                screen,
+                (255, 200, 0),
+                (int(self.x), int(self.y)),
+                int(self.explosion_time),
+                2,
+            )
+            pygame.draw.circle(
+                screen,
+                (255, 150, 0),
+                (int(self.x), int(self.y)),
+                int(self.explosion_time + self.size),
+                4,
+            )
         for blast in self.blasts:
             location, damage, blast_age = blast
-            pygame.draw.circle(screen, (255, 100, 0), (int(location[0]), int(location[1])), int(blast_age), 2)
+            pygame.draw.circle(
+                screen,
+                (255, 100, 0),
+                (int(location[0]), int(location[1])),
+                int(blast_age),
+                2,
+            )
+
 
 class Fire(Bullet):
-    def __init__(self, x, y, direction, damage, pierce, lifetime, size, color, knockback):
-        super().__init__(x, y, direction, damage, pierce, lifetime, size, color, knockback)
+    def __init__(
+        self, x, y, direction, damage, pierce, lifetime, size, color, knockback
+    ):
+        super().__init__(
+            x, y, direction, damage, pierce, lifetime, size, color, knockback
+        )
         self.lifetime = self.lifetime * 8
-        self.damage = self.damage*.07
+        self.damage = self.damage * 0.07
         self.glow_red_low = 200
         self.glow_red_high = 255
         self.glow_green_low = 100
@@ -297,9 +366,9 @@ class Fire(Bullet):
 
     def move(self, targets):
         self.age += 1
-        self.x += self.velocity.x*2
-        self.y += self.velocity.y*2
-        self.velocity = self.velocity.multiply(.9)
+        self.x += self.velocity.x * 2
+        self.y += self.velocity.y * 2
+        self.velocity = self.velocity.multiply(0.9)
         for target in targets:
             if self.collides(target):
                 target.hurt(self)
@@ -308,9 +377,18 @@ class Fire(Bullet):
     def draw(self, screen):
         self.glow_red += random.randint(-5, 5)
         self.glow_green += random.randint(-5, 5)
-        self.glow_green = min(self.glow_green_high, max(self.glow_green_low, self.glow_green))
+        self.glow_green = min(
+            self.glow_green_high, max(self.glow_green_low, self.glow_green)
+        )
         self.glow_red = min(self.glow_red_high, max(self.glow_red_low, self.glow_red))
         remaining = max(0.2, 1 - self.age / self.lifetime)
         flame_size = max(1, round(self.size * (0.5 + remaining)))
-        pygame.draw.circle(screen, (self.glow_red, self.glow_green, 0), (int(self.x), int(self.y)), flame_size + 2)
-        pygame.draw.circle(screen, (255, 150, 0), (int(self.x), int(self.y)), flame_size)
+        pygame.draw.circle(
+            screen,
+            (self.glow_red, self.glow_green, 0),
+            (int(self.x), int(self.y)),
+            flame_size + 2,
+        )
+        pygame.draw.circle(
+            screen, (255, 150, 0), (int(self.x), int(self.y)), flame_size
+        )

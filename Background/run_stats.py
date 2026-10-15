@@ -2,11 +2,35 @@ import json
 import os
 from datetime import datetime
 
-
-STATS_FILE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "run_stats.json")
-HAUNTING_OPTION_KEYS = ("Chaser", "Dasher", "Blaster", "Ghost", "Spiker", "Guardian", "Warper", "Turret")
-SWARM_ENEMY_KEYS = ("Chaser", "Dasher", "Blaster", "Ghost", "Spiker", "Guardian", "Warper", "Turret")
-CANONICAL_PLAYER_NAMES = {"dasher": "Dasher", "nova": "Nova", "retribution": "Retribution", "slime": "Slime"}
+STATS_FILE_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), "run_stats.json"
+)
+HAUNTING_OPTION_KEYS = (
+    "Chaser",
+    "Dasher",
+    "Blaster",
+    "Ghost",
+    "Spiker",
+    "Guardian",
+    "Warper",
+    "Turret",
+)
+SWARM_ENEMY_KEYS = (
+    "Chaser",
+    "Dasher",
+    "Blaster",
+    "Ghost",
+    "Spiker",
+    "Guardian",
+    "Warper",
+    "Turret",
+)
+CANONICAL_PLAYER_NAMES = {
+    "dasher": "Dasher",
+    "nova": "Nova",
+    "retribution": "Retribution",
+    "slime": "Slime",
+}
 CANONICAL_GUN_NAMES = {
     "blowdart": "Blowdart",
     "cannon": "Cannon",
@@ -69,7 +93,9 @@ def _normalize_swarm_enemy_types(raw_enemy_types, fallback=None):
     return normalized
 
 
-def _normalize_selected_loadout(raw_loadout, fallback_body="Dasher", fallback_gun="Cannon"):
+def _normalize_selected_loadout(
+    raw_loadout, fallback_body="Dasher", fallback_gun="Cannon"
+):
     fallback = {
         "body": _canonicalize_name(fallback_body, CANONICAL_PLAYER_NAMES),
         "gun": _canonicalize_name(fallback_gun, CANONICAL_GUN_NAMES),
@@ -78,8 +104,12 @@ def _normalize_selected_loadout(raw_loadout, fallback_body="Dasher", fallback_gu
     if not isinstance(raw_loadout, dict):
         return fallback
 
-    body_name = _canonicalize_name(raw_loadout.get("body", fallback["body"]), CANONICAL_PLAYER_NAMES)
-    gun_name = _canonicalize_name(raw_loadout.get("gun", fallback["gun"]), CANONICAL_GUN_NAMES)
+    body_name = _canonicalize_name(
+        raw_loadout.get("body", fallback["body"]), CANONICAL_PLAYER_NAMES
+    )
+    gun_name = _canonicalize_name(
+        raw_loadout.get("gun", fallback["gun"]), CANONICAL_GUN_NAMES
+    )
     return {
         "body": body_name,
         "gun": gun_name,
@@ -100,8 +130,12 @@ def create_run_snapshot(selected_body, selected_gun):
 
 
 def update_runtime(run_snapshot, game_ticks, level, exp_held):
-    run_snapshot["ticks_survived"] = max(run_snapshot.get("ticks_survived", 0), int(game_ticks))
-    run_snapshot["level_reached"] = max(run_snapshot.get("level_reached", 1), int(level))
+    run_snapshot["ticks_survived"] = max(
+        run_snapshot.get("ticks_survived", 0), int(game_ticks)
+    )
+    run_snapshot["level_reached"] = max(
+        run_snapshot.get("level_reached", 1), int(level)
+    )
     run_snapshot["exp_held"] = max(run_snapshot.get("exp_held", 0), int(exp_held))
 
 
@@ -165,12 +199,25 @@ def _load_store():
     defaults["options"].update(loaded.get("options", {}))
     if not isinstance(defaults.get("suspended_run"), dict):
         defaults["suspended_run"] = {}
-    for key in ["enemy_kills", "player_max_levels", "gun_max_levels", "waves_by_combo", "levels_by_combo", "levels_total_by_combo", "haunting_max_levels", "swarm_max_levels", "secret_progress"]:
+    for key in [
+        "enemy_kills",
+        "player_max_levels",
+        "gun_max_levels",
+        "waves_by_combo",
+        "levels_by_combo",
+        "levels_total_by_combo",
+        "haunting_max_levels",
+        "swarm_max_levels",
+        "secret_progress",
+    ]:
         if key not in defaults["achievements"]:
             defaults["achievements"][key] = {}
     hauntings = default_haunting_options()
     hauntings.update(defaults["options"].get("hauntings", {}))
-    defaults["options"]["hauntings"] = {enemy_name: bool(hauntings.get(enemy_name, False)) for enemy_name in HAUNTING_OPTION_KEYS}
+    defaults["options"]["hauntings"] = {
+        enemy_name: bool(hauntings.get(enemy_name, False))
+        for enemy_name in HAUNTING_OPTION_KEYS
+    }
 
     swarm = default_swarm_options()
     loaded_swarm = defaults["options"].get("swarm", {})
@@ -204,13 +251,17 @@ def _load_store():
     levels_total_source = defaults["achievements"].get("levels_total_by_combo", {})
     if not isinstance(levels_total_source, dict) or not levels_total_source:
         levels_total_source = defaults["achievements"].get("levels_by_combo", {})
-    defaults["achievements"]["levels_total_by_combo"] = _normalize_nonnegative_int_map(levels_total_source)
+    defaults["achievements"]["levels_total_by_combo"] = _normalize_nonnegative_int_map(
+        levels_total_source
+    )
     secret_progress = dict(SECRET_PROGRESS_KEYS)
     loaded_secret_progress = defaults["achievements"].get("secret_progress", {})
     if isinstance(loaded_secret_progress, dict):
         for key, default_value in SECRET_PROGRESS_KEYS.items():
             try:
-                secret_progress[key] = max(default_value, int(loaded_secret_progress.get(key, default_value)))
+                secret_progress[key] = max(
+                    default_value, int(loaded_secret_progress.get(key, default_value))
+                )
             except (TypeError, ValueError):
                 secret_progress[key] = default_value
     defaults["achievements"]["secret_progress"] = secret_progress
@@ -235,7 +286,9 @@ def _normalize_level_map(level_map, canonical_names):
             level_value = int(raw_level)
         except (TypeError, ValueError):
             level_value = 0
-        normalized[canonical_key] = max(level_value, int(normalized.get(canonical_key, 0)))
+        normalized[canonical_key] = max(
+            level_value, int(normalized.get(canonical_key, 0))
+        )
     return normalized
 
 
@@ -270,7 +323,10 @@ def load_haunting_options():
     data = _load_store()
     hauntings = default_haunting_options()
     hauntings.update(data.get("options", {}).get("hauntings", {}))
-    return {enemy_name: bool(hauntings.get(enemy_name, False)) for enemy_name in HAUNTING_OPTION_KEYS}
+    return {
+        enemy_name: bool(hauntings.get(enemy_name, False))
+        for enemy_name in HAUNTING_OPTION_KEYS
+    }
 
 
 def save_haunting_options(haunting_options):
@@ -350,7 +406,9 @@ def load_suspended_run():
 
 def save_suspended_run(suspended_run):
     data = _load_store()
-    data["suspended_run"] = dict(suspended_run) if isinstance(suspended_run, dict) else {}
+    data["suspended_run"] = (
+        dict(suspended_run) if isinstance(suspended_run, dict) else {}
+    )
     _write_store(data)
 
 
@@ -399,9 +457,18 @@ def snapshot_player(player):
 
 
 def _update_best_run(best_run, run_snapshot):
-    tracked = ["waves_spawned", "level_ups", "upgrades_chosen", "level_reached", "ticks_survived", "exp_held"]
+    tracked = [
+        "waves_spawned",
+        "level_ups",
+        "upgrades_chosen",
+        "level_reached",
+        "ticks_survived",
+        "exp_held",
+    ]
     for metric in tracked:
-        best_run[metric] = max(int(best_run.get(metric, 0)), int(run_snapshot.get(metric, 0)))
+        best_run[metric] = max(
+            int(best_run.get(metric, 0)), int(run_snapshot.get(metric, 0))
+        )
 
 
 stats_paused = False
@@ -493,11 +560,14 @@ def record_swarm_level(swarm_options, level):
 def record_waves_with_combo(player_name, gun_name, waves):
     """Track waves survived with each player/gun combination."""
     data = _load_store()
-    updated = _update_combo_waves_achievement(data["achievements"], {
-        "body": player_name,
-        "gun": gun_name,
-        "waves_spawned": waves,
-    })
+    updated = _update_combo_waves_achievement(
+        data["achievements"],
+        {
+            "body": player_name,
+            "gun": gun_name,
+            "waves_spawned": waves,
+        },
+    )
     if updated:
         _write_store(data)
 
@@ -516,8 +586,12 @@ def record_secret_progress(secret_key, amount=1):
         return
 
     data = _load_store()
-    secret_progress = data["achievements"].setdefault("secret_progress", dict(SECRET_PROGRESS_KEYS))
-    current_value = int(secret_progress.get(secret_key, SECRET_PROGRESS_KEYS[secret_key]))
+    secret_progress = data["achievements"].setdefault(
+        "secret_progress", dict(SECRET_PROGRESS_KEYS)
+    )
+    current_value = int(
+        secret_progress.get(secret_key, SECRET_PROGRESS_KEYS[secret_key])
+    )
     secret_progress[secret_key] = current_value + amount_value
     _write_store(data)
 
@@ -534,8 +608,12 @@ def record_secret_max(secret_key, value):
         return
 
     data = _load_store()
-    secret_progress = data["achievements"].setdefault("secret_progress", dict(SECRET_PROGRESS_KEYS))
-    current_value = int(secret_progress.get(secret_key, SECRET_PROGRESS_KEYS[secret_key]))
+    secret_progress = data["achievements"].setdefault(
+        "secret_progress", dict(SECRET_PROGRESS_KEYS)
+    )
+    current_value = int(
+        secret_progress.get(secret_key, SECRET_PROGRESS_KEYS[secret_key])
+    )
     if value_int > current_value:
         secret_progress[secret_key] = value_int
         _write_store(data)

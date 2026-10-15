@@ -9,8 +9,9 @@ import Enemies.particles as particles_file
 from Background import run_stats
 from helpers import Vector
 
+
 class PlayerBody(Entity):
-    def __init__(self, x, y, size=20, color=(250,250,250), health=10):
+    def __init__(self, x, y, size=20, color=(250, 250, 250), health=10):
         super().__init__(x, y, size, color, health)
         # Gun stats are now on the player
         self.attack_speed = 20
@@ -19,7 +20,7 @@ class PlayerBody(Entity):
         self.pierce = 3
         self.attack_range = 10
         self.damage = 1
-        self.bullet_color = (255,255,255)
+        self.bullet_color = (255, 255, 255)
         self.knockback = 0.1
         self.bullet_speed = 5
         self.attack_cooldown = 0
@@ -35,7 +36,7 @@ class PlayerBody(Entity):
         self.post_hit_refund_damage = 0
         self.pending_parry_death = False
         self.dash_stamp_timer = 0
-    
+
     def shoot(self, direction):
         self.gun.shoot(direction, bullets_file.bullets)
 
@@ -51,7 +52,7 @@ class PlayerBody(Entity):
             self.post_hit_refund_damage = 0
         self.gun.update()
         super().move()
-        
+
     def hurt(self, enemy, direct_damage=False):
         if self.iframes > 0:
             return
@@ -59,20 +60,22 @@ class PlayerBody(Entity):
             self.health -= enemy
             self.iframes = 30
             return
-        
-        if (isinstance(self.gun, Blade) 
-            #and getattr(self, "gun_effect_unlocked", False) 
-            and not self.gun_effect_unlocked 
-            and self.sword_guard_timer > 0):
+
+        if (
+            isinstance(self.gun, Blade)
+            # and getattr(self, "gun_effect_unlocked", False)
+            and not self.gun_effect_unlocked
+            and self.sword_guard_timer > 0
+        ):
             self._on_successful_parry(enemy)
             return
-        
+
         self.iframes = 30
         damage_taken = max(0, round(enemy.damage))
 
         if damage_taken <= 0:
             return
-        
+
         pre_hit_health = self.health
         self.health -= damage_taken
         would_die = self.health <= 0
@@ -80,7 +83,7 @@ class PlayerBody(Entity):
         if would_die:
             self.health = 1
             self.alive = True
-            
+
         actual_damage = min(pre_hit_health, damage_taken)
         self._start_post_hit_parry_window(actual_damage, would_die)
 
@@ -152,66 +155,92 @@ class PlayerBody(Entity):
                 random.randint(-180, 180) / 100,
             )
             particles_file.particles.append(particle)
-    
+
     def draw(self, screen, font=None):
         super().draw(screen, font)
-        pygame.draw.circle(screen, (100, 100, 255), (int(self.x), int(self.y)), self.size-3, 8)
+        pygame.draw.circle(
+            screen, (100, 100, 255), (int(self.x), int(self.y)), self.size - 3, 8
+        )
         self.gun.draw(self, screen)
         if self.iframes > 0:
             self.iframes -= 1
-            pygame.draw.circle(screen, (255, 255, 255), (int(self.x), int(self.y)), self.size + self.iframes, 2)
+            pygame.draw.circle(
+                screen,
+                (255, 255, 255),
+                (int(self.x), int(self.y)),
+                self.size + self.iframes,
+                2,
+            )
 
 
 def spawn_unlock_particles(player, count, color=None):
     burst_color = color or player.color
     for _ in range(count):
-        particle = particles_file.HitParticle(player.x, player.y, random.randint(6, 14), burst_color)
+        particle = particles_file.HitParticle(
+            player.x, player.y, random.randint(6, 14), burst_color
+        )
         particle.x += random.randint(-8, 8)
         particle.y += random.randint(-8, 8)
-        particle.direction = Vector(random.randint(-120, 120) / 100, random.randint(-120, 120) / 100)
+        particle.direction = Vector(
+            random.randint(-120, 120) / 100, random.randint(-120, 120) / 100
+        )
         particles_file.particles.append(particle)
 
 
 class Retribution(PlayerBody):
-    def __init__(self, x, y, size=20, color=(250,200,200), health=10):
+    def __init__(self, x, y, size=20, color=(250, 200, 200), health=10):
         super().__init__(x, y, size, color, health)
         self.retribution = True
         self.rage_time = 0
-    
+
     def hurt(self, enemy, direct_damage=False):
         if self.iframes <= 0:
             if self.body_effect_unlocked:
                 self.rage()
             super().hurt(enemy, direct_damage=direct_damage)
             if self.retribution:
+
                 def fire_retribution_shot(direction):
                     if isinstance(self.gun, Blade):
-                        self.gun.shoot(direction, bullets_file.bullets, ignore_cooldown=True, allow_parry=False)
+                        self.gun.shoot(
+                            direction,
+                            bullets_file.bullets,
+                            ignore_cooldown=True,
+                            allow_parry=False,
+                        )
                     else:
-                        self.gun.shoot(direction, bullets_file.bullets, ignore_cooldown=True)
+                        self.gun.shoot(
+                            direction, bullets_file.bullets, ignore_cooldown=True
+                        )
 
                 for i in range(self.body_boost_tier + 1):
                     fire_retribution_shot("up")
                     fire_retribution_shot("down")
                     fire_retribution_shot("left")
                     fire_retribution_shot("right")
-                for i in range(self.body_boost_tier//2):
+                for i in range(self.body_boost_tier // 2):
                     fire_retribution_shot("up-left")
                     fire_retribution_shot("up-right")
                     fire_retribution_shot("down-left")
                     fire_retribution_shot("down-right")
-    
+
     def rage(self):
-        self.rage_time = 120 + self.body_boost_tier*30
+        self.rage_time = 120 + self.body_boost_tier * 30
         self.damage = round(self.damage * 1.3)
         self.attack_speed = max(3, self.attack_speed - 5)
         self.attack_spread += 0.02
         self.multishot += 2
-    
+
     def draw(self, screen, font=None):
         super().draw(screen, font)
         if self.rage_time > 0:
-            pygame.draw.circle(screen, (250, 100, 100), (int(self.x), int(self.y)), self.size + round(self.rage_time/5), 4)
+            pygame.draw.circle(
+                screen,
+                (250, 100, 100),
+                (int(self.x), int(self.y)),
+                self.size + round(self.rage_time / 5),
+                4,
+            )
             self.rage_time -= 1
             self.attack_cooldown -= 5
             if self.attack_cooldown < 0:
@@ -222,12 +251,13 @@ class Retribution(PlayerBody):
                 self.attack_spread -= 0.02
                 self.multishot -= 2
 
+
 class Dasher(PlayerBody):
-    def __init__(self, x, y, size=20, color=(250,250,200), health=10):
+    def __init__(self, x, y, size=20, color=(250, 250, 200), health=10):
         super().__init__(x, y, size, color, health)
         self.dash_cooldown = 0
         self.dash_cooldown_duration = 60
-    
+
     def dash(self, direction):
         if self.body_effect_unlocked:
             self.iframes = 20
@@ -252,52 +282,77 @@ class Dasher(PlayerBody):
             self.velocity = self.velocity.add(dash_vector.multiply(20))
             self.dash_stamp_timer = 8
             self.dash_cooldown = self.dash_cooldown_duration
-    
+
     def move(self):
         if self.dash_cooldown > 0:
             self.dash_cooldown -= 1
         super().move()
 
+
 class Nova(PlayerBody):
-    def __init__(self, x, y, size=20, color=(200,250,250), health=10):
+    def __init__(self, x, y, size=20, color=(200, 250, 250), health=10):
         super().__init__(x, y, size, color, health)
         self.nova_cooldown = 0
         self.nova_range = 150
         self.nova_duration = 25
         self.nova_time = 0
         self.affected_targets = []
-    
+
     def nova(self, targets):
         if self.nova_cooldown <= 0:
             for target in targets:
-                if (Vector(target.x - self.x, target.y - self.y).magnitude) <= self.nova_range:
+                if (
+                    Vector(target.x - self.x, target.y - self.y).magnitude
+                ) <= self.nova_range:
                     self.affected_targets.append((target, self.nova_duration))
-                    target.health -= round(self.damage * .5)
+                    target.health -= round(self.damage * 0.5)
                 elif self.body_effect_unlocked:
-                    if (Vector(target.x - self.x, target.y - self.y).magnitude) <= self.nova_range*3:
-                        self.affected_targets.append((target, self.nova_duration/2))
-                        target.health -= round(self.damage * .2)
+                    if (
+                        Vector(target.x - self.x, target.y - self.y).magnitude
+                    ) <= self.nova_range * 3:
+                        self.affected_targets.append((target, self.nova_duration / 2))
+                        target.health -= round(self.damage * 0.2)
             if self.nova_time <= 0:
                 self.nova_time = 25
-            self.nova_cooldown = 120 
-    
+            self.nova_cooldown = 120
+
     def move(self):
         if self.nova_cooldown > 0:
             self.nova_cooldown -= 1
         if self.nova_time > 0:
             self.nova_time -= 1
         super().move()
-    
+
     def draw(self, screen, font=None):
         super().draw(screen, font)
         if self.nova_time > 0:
-            pygame.draw.circle(screen, (0, 200, 250), (int(self.x), int(self.y)), self.nova_range*((self.nova_time / 25)), 2)
+            pygame.draw.circle(
+                screen,
+                (0, 200, 250),
+                (int(self.x), int(self.y)),
+                self.nova_range * ((self.nova_time / 25)),
+                2,
+            )
             if self.body_effect_unlocked:
-                pygame.draw.circle(screen, (0, 150, 200), (int(self.x), int(self.y)), self.nova_range*3*((self.nova_time / 25)), 2)
+                pygame.draw.circle(
+                    screen,
+                    (0, 150, 200),
+                    (int(self.x), int(self.y)),
+                    self.nova_range * 3 * ((self.nova_time / 25)),
+                    2,
+                )
         for target, duration in self.affected_targets:
             if duration > 0:
-                pygame.draw.circle(screen, (0, 100, 250), (int(target.x), int(target.y)), target.size + 5, 2)
-                target.velocity = Vector(target.x - self.x, target.y - self.y).normalize().multiply(3)
+                pygame.draw.circle(
+                    screen,
+                    (0, 100, 250),
+                    (int(target.x), int(target.y)),
+                    target.size + 5,
+                    2,
+                )
+                target.velocity = (
+                    Vector(target.x - self.x, target.y - self.y).normalize().multiply(3)
+                )
                 target.x += target.velocity.x
                 target.y += target.velocity.y
                 index = self.affected_targets.index((target, duration))
@@ -307,13 +362,13 @@ class Nova(PlayerBody):
 
 
 class Slime(PlayerBody):
-    def __init__(self, x, y, size=20, color=(200,250,200), health=10):
+    def __init__(self, x, y, size=20, color=(200, 250, 200), health=10):
         super().__init__(x, y, size, color, health)
         self.slime_trail = []
         self.trail_length = 1000
         self.slime_cooldown = 0
         self.slime_size = 15
-    
+
     def move(self):
         updated_trail = []
         for x, y, size, color in self.slime_trail:
@@ -325,13 +380,21 @@ class Slime(PlayerBody):
             self.slime_cooldown -= 1
         super().move()
         last_slime_position = self.slime_trail[-1] if self.slime_trail else None
-        distance_from_last_slime = ((self.x - last_slime_position[0]) ** 2 + (self.y - last_slime_position[1]) ** 2) ** 0.5 if last_slime_position else float('inf')
+        distance_from_last_slime = (
+            (
+                (self.x - last_slime_position[0]) ** 2
+                + (self.y - last_slime_position[1]) ** 2
+            )
+            ** 0.5
+            if last_slime_position
+            else float("inf")
+        )
         if self.slime_cooldown <= 0 and distance_from_last_slime >= 5:
             self.slime_cooldown = 4
-            self.slime_trail.append((self.x, self.y, self.slime_size, (100,150,100)))
+            self.slime_trail.append((self.x, self.y, self.slime_size, (100, 150, 100)))
             if len(self.slime_trail) > self.trail_length:
                 self.slime_trail.pop(0)
-    
+
     def slime_target(self, targets):
         for target in targets:
             for slimes in self.slime_trail:
@@ -339,46 +402,53 @@ class Slime(PlayerBody):
                 if Vector(target.x - x, target.y - y).magnitude <= size + target.size:
                     if target.harm_frames <= 0:
                         target.health -= round(self.damage * 0.8)
-                        target.harm_frames = 10 
-                    target.velocity = target.velocity.multiply(-.3)
+                        target.harm_frames = 10
+                    target.velocity = target.velocity.multiply(-0.3)
                     target.x += target.velocity.x
                     target.y += target.velocity.y
                     break
-    
+
     def slime_effect(self):
         if self.body_effect_unlocked and self.slime_cooldown <= 5:
             for x in range(-200, 200, 35):
                 for y in range(-200, 200, 35):
                     if Vector(x, y).magnitude <= 100:
-                        self.slime_trail.append((self.x + x + random.randint(-10, 10), self.y + y + random.randint(-10, 10), self.slime_size+5, (100,150,100)))
+                        self.slime_trail.append(
+                            (
+                                self.x + x + random.randint(-10, 10),
+                                self.y + y + random.randint(-10, 10),
+                                self.slime_size + 5,
+                                (100, 150, 100),
+                            )
+                        )
             self.slime_cooldown = 40
-    
+
     def draw(self, screen, font=None):
         super().draw(screen, font)
-    
+
     def draw_slime_trail(self, screen):
         for x, y, size, color in self.slime_trail:
             if size > 0:
                 pygame.draw.circle(screen, color, (int(x), int(y)), round(size))
-    
+
     def hurt(self, enemy):
         if self.iframes <= 0:
             super().hurt(enemy)
-            self.slime_trail.append((self.x, self.y, self.slime_size, (100,150,100)))
+            self.slime_trail.append((self.x, self.y, self.slime_size, (100, 150, 100)))
 
 
 BODY_TYPES = {
     "Dasher": Dasher,
     "Retribution": Retribution,
     "Nova": Nova,
-    "Slime" : Slime,
+    "Slime": Slime,
 }
 
 GUN_TYPES = {
     "Cannon": Cannon,
     "Shotgun": Shotgun,
     "Blowdart": Blowdart,
-    "Sword" : Blade,
+    "Sword": Blade,
     "Flamethrower": Flamethrower,
 }
 
@@ -486,12 +556,14 @@ def apply_level_progression(player, level):
             descrip = "Can now slime \na large zone."
         else:
             descrip = f"{get_body_name(player)} unlocked \nits special effect."
-        events.append({
-            "kind": "body_unlock",
-            "title": "Body Unlock",
-            "description": descrip,
-            "color": (255, 205, 120),
-        })
+        events.append(
+            {
+                "kind": "body_unlock",
+                "title": "Body Unlock",
+                "description": descrip,
+                "color": (255, 205, 120),
+            }
+        )
 
     if level >= 10 and not getattr(player, "gun_effect_unlocked", False):
         apply_gun_effect_unlock(player)
@@ -507,12 +579,14 @@ def apply_level_progression(player, level):
             descrip = "Flamethrower now fires faster and wider."
         else:
             descrip = f"{get_gun_name(player)} unlocked \nits special effect."
-        events.append({
-            "kind": "gun_unlock",
-            "title": "Gun Unlock",
-            "description": descrip,
-            "color": (120, 190, 255),
-        })
+        events.append(
+            {
+                "kind": "gun_unlock",
+                "title": "Gun Unlock",
+                "description": descrip,
+                "color": (120, 190, 255),
+            }
+        )
 
     target_body_boost_tier = 0
     if level >= 20:
@@ -525,22 +599,26 @@ def apply_level_progression(player, level):
     while player.body_boost_tier < target_body_boost_tier:
         apply_body_stat_boost(player)
         player.body_boost_tier += 1
-        events.append({
-            "kind": "body_boost",
-            "title": "Body Boost",
-            "description": f"{get_body_name(player)} gained a permanent stat boost.",
-            "color": (120, 255, 160),
-        })
+        events.append(
+            {
+                "kind": "body_boost",
+                "title": "Body Boost",
+                "description": f"{get_body_name(player)} gained a permanent stat boost.",
+                "color": (120, 255, 160),
+            }
+        )
 
     while player.gun_boost_tier < target_gun_boost_tier:
         apply_gun_stat_boost(player)
         player.gun_boost_tier += 1
-        events.append({
-            "kind": "gun_boost",
-            "title": "Gun Boost",
-            "description": f"{get_gun_name(player)} gained a permanent stat boost.",
-            "color": (190, 140, 255),
-        })
+        events.append(
+            {
+                "kind": "gun_boost",
+                "title": "Gun Boost",
+                "description": f"{get_gun_name(player)} gained a permanent stat boost.",
+                "color": (190, 140, 255),
+            }
+        )
 
     return events
 
@@ -579,8 +657,12 @@ def rebuild_player(player, body_name=None, gun_name=None):
     if isinstance(player, target_body_class):
         updated_player = player
     else:
-        base_health = max(1, round(getattr(player, "max_health", getattr(player, "health", 10))))
-        updated_player = target_body_class(player.x, player.y, size=player.size, health=base_health)
+        base_health = max(
+            1, round(getattr(player, "max_health", getattr(player, "health", 10)))
+        )
+        updated_player = target_body_class(
+            player.x, player.y, size=player.size, health=base_health
+        )
         for field_name in _PRESERVED_PLAYER_FIELDS:
             if hasattr(player, field_name):
                 setattr(updated_player, field_name, getattr(player, field_name))

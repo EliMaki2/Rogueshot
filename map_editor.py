@@ -19,6 +19,7 @@ Editor:
   spawn zones, movement triggers, enemy markers) that the game already reads, plus the full
   "editor_objects" list the editor itself round-trips.
 """
+
 import copy
 import json
 import math
@@ -28,9 +29,21 @@ import re
 import pygame
 
 from Background.maps import (
-    MAPS_DIR, DEFAULT_SPAWNING, DEFAULT_GOAL_RADIUS, DEFAULT_LEVEL_END_DELAY_TICKS,
-    ENEMY_TYPES, CARDS_PER_LEVEL, MAX_LEVELS, ICON_SIZE, ICON_PALETTE, legacy_objects, level_requirement,
-    list_map_files, sanitize_icon, sanitize_levels, sanitize_waves,
+    MAPS_DIR,
+    DEFAULT_SPAWNING,
+    DEFAULT_GOAL_RADIUS,
+    DEFAULT_LEVEL_END_DELAY_TICKS,
+    ENEMY_TYPES,
+    CARDS_PER_LEVEL,
+    MAX_LEVELS,
+    ICON_SIZE,
+    ICON_PALETTE,
+    legacy_objects,
+    level_requirement,
+    list_map_files,
+    sanitize_icon,
+    sanitize_levels,
+    sanitize_waves,
 )
 from Background.run_stats import CANONICAL_GUN_NAMES, CANONICAL_PLAYER_NAMES
 from Background.upgrades import total_Upgrades
@@ -84,17 +97,51 @@ TRIGGERS = ("trig_move", "trig_attack", "trig_ability")
 SOURCES = TRIGGERS + ("spawn_point", "gate", "wave_trigger", "level_trigger")
 GEOM_KEYS = ("x1", "y1", "x2", "y2", "x", "y", "r", "pts")
 DEFAULT_HALF = {"wall_rect": (60, 15), "spawn_zone": (80, 50), "kill_zone": (60, 40)}
-DEFAULT_RADIUS = {"wall_circle": 30, "trig_move": DEFAULT_GOAL_RADIUS, "trig_attack": DEFAULT_GOAL_RADIUS,
-                  "trig_ability": DEFAULT_GOAL_RADIUS, "level_end": 30}
+DEFAULT_RADIUS = {
+    "wall_circle": 30,
+    "trig_move": DEFAULT_GOAL_RADIUS,
+    "trig_attack": DEFAULT_GOAL_RADIUS,
+    "trig_ability": DEFAULT_GOAL_RADIUS,
+    "level_end": 30,
+}
 
 # (tab, [(button label, type, extra properties)])
 TABS = [
-    ("Walls", [("Rect Wall", "wall_rect", {}), ("Triangle Wall", "wall_tri", {}), ("Circle Wall", "wall_circle", {})]),
-    ("Triggers", [("Movement", "trig_move", {}), ("Attack", "trig_attack", {}), ("Player Ability", "trig_ability", {})]),
-    ("Enemies", [("Spawn Zone", "spawn_zone", {}), ("Spawn Point", "spawn_point", {}), ("Kill Zone", "kill_zone", {}),
-                 ("Exp Spawner", "exp_spawner", {})]),
-    ("Logic", [("Text", "text", {}), ("Level End", "level_end", {}),
-               ("Wave Beaten", "wave_trigger", {}), ("Level Reached", "level_trigger", {})] + [(g, "gate", {"gate": g}) for g in GATES]),
+    (
+        "Walls",
+        [
+            ("Rect Wall", "wall_rect", {}),
+            ("Triangle Wall", "wall_tri", {}),
+            ("Circle Wall", "wall_circle", {}),
+        ],
+    ),
+    (
+        "Triggers",
+        [
+            ("Movement", "trig_move", {}),
+            ("Attack", "trig_attack", {}),
+            ("Player Ability", "trig_ability", {}),
+        ],
+    ),
+    (
+        "Enemies",
+        [
+            ("Spawn Zone", "spawn_zone", {}),
+            ("Spawn Point", "spawn_point", {}),
+            ("Kill Zone", "kill_zone", {}),
+            ("Exp Spawner", "exp_spawner", {}),
+        ],
+    ),
+    (
+        "Logic",
+        [
+            ("Text", "text", {}),
+            ("Level End", "level_end", {}),
+            ("Wave Beaten", "wave_trigger", {}),
+            ("Level Reached", "level_trigger", {}),
+        ]
+        + [(g, "gate", {"gate": g}) for g in GATES],
+    ),
 ]
 
 _fonts = {}
@@ -240,7 +287,12 @@ class Editor:
     def handles(self, o):
         shape = SHAPES[o["type"]]
         if shape == "rect":
-            return [(o["x1"], o["y1"]), (o["x2"], o["y1"]), (o["x2"], o["y2"]), (o["x1"], o["y2"])]
+            return [
+                (o["x1"], o["y1"]),
+                (o["x2"], o["y1"]),
+                (o["x2"], o["y2"]),
+                (o["x1"], o["y2"]),
+            ]
         if shape == "tri":
             return [tuple(p) for p in o["pts"]]
         if shape == "circle":
@@ -288,8 +340,14 @@ class Editor:
         t, shape, rows = o["type"], SHAPES[o["type"]], []
 
         def num(label, get, setter, step, lo=1, hi=9999):
-            rows.append((f"{label}: {get()}", "num",
-                         lambda: setter(clamp(get() - step, lo, hi)), lambda: setter(clamp(get() + step, lo, hi))))
+            rows.append(
+                (
+                    f"{label}: {get()}",
+                    "num",
+                    lambda: setter(clamp(get() - step, lo, hi)),
+                    lambda: setter(clamp(get() + step, lo, hi)),
+                )
+            )
 
         def key_num(label, key, step, lo=1, hi=9999):
             num(label, lambda: o[key], lambda v: o.__setitem__(key, v), step, lo, hi)
@@ -297,12 +355,21 @@ class Editor:
         def cycle(label, key, choices):
             def go():
                 o[key] = choices[(choices.index(o[key]) + 1) % len(choices)]
+
             rows.append((f"{label}: {o[key]}", "act", go, None))
 
         def toggle(label, key):
-            rows.append((f"{label}: {'Yes' if o[key] else 'No'}", "act", lambda: o.__setitem__(key, not o[key]), None))
+            rows.append(
+                (
+                    f"{label}: {'Yes' if o[key] else 'No'}",
+                    "act",
+                    lambda: o.__setitem__(key, not o[key]),
+                    None,
+                )
+            )
 
         if shape == "rect":
+
             def set_w(v):
                 o["x2"] = min(o["x1"] + v, CANVAS_W)
                 o["x1"] = min(o["x1"], o["x2"] - MIN_SIZE)
@@ -335,7 +402,14 @@ class Editor:
             if o["mode"] == "pulse":
                 key_num("Pulse ticks", "pulse_ticks", 5, 1, 9999)
         if t == "text":
-            rows.append(("Text: " + o["text"], "text", lambda: self.begin_typing(o, "text"), None))
+            rows.append(
+                (
+                    "Text: " + o["text"],
+                    "text",
+                    lambda: self.begin_typing(o, "text"),
+                    None,
+                )
+            )
             key_num("Size", "size", 4, 10, 120)
         if t == "gate":
             cycle("Gate", "gate", GATES)
@@ -370,7 +444,9 @@ class Editor:
     def popup_rect(self):
         x, y = self.popup["pos"]
         h = ROW_H * len(self.rows(self.popup["obj"]))
-        return pygame.Rect(clamp(x, 0, WIN_W - POPUP_W), clamp(y, 0, WIN_H - h), POPUP_W, h)
+        return pygame.Rect(
+            clamp(x, 0, WIN_W - POPUP_W), clamp(y, 0, WIN_H - h), POPUP_W, h
+        )
 
     def popup_click(self, sx, sy):
         rect = self.popup_rect()
@@ -394,7 +470,7 @@ class Editor:
 
     # ---- dragging ----
     def start_drag(self, x, y):
-        if (x - self.player[0]) ** 2 + (y - self.player[1]) ** 2 <= PLAYER_RADIUS ** 2:
+        if (x - self.player[0]) ** 2 + (y - self.player[1]) ** 2 <= PLAYER_RADIUS**2:
             self.drag = ("player",)
             return
         sel = self.selected
@@ -441,8 +517,16 @@ class Editor:
                     my = ay + (MIN_SIZE if my >= ay else -MIN_SIZE)
                 o.update(x1=min(ax, mx), y1=min(ay, my), x2=max(ax, mx), y2=max(ay, my))
                 # Flipping past the anchor reorders the corners, so follow the one now under the mouse.
-                self.drag = ("handle", o, [(mx <= ax and my <= ay), (mx > ax and my <= ay),
-                                           (mx > ax and my > ay), (mx <= ax and my > ay)].index(True))
+                self.drag = (
+                    "handle",
+                    o,
+                    [
+                        (mx <= ax and my <= ay),
+                        (mx > ax and my <= ay),
+                        (mx > ax and my > ay),
+                        (mx <= ax and my > ay),
+                    ].index(True),
+                )
 
     # ---- save / load ----
     def build_data(self):
@@ -454,12 +538,17 @@ class Editor:
         ends = {o["id"] for o in self.objects if o["type"] == "level_end"}
 
         def corners(o):
-            return [[round(o["x1"]), round(o["y1"])], [round(o["x2"]), round(o["y1"])],
-                    [round(o["x2"]), round(o["y2"])], [round(o["x1"]), round(o["y2"])]]
+            return [
+                [round(o["x1"]), round(o["y1"])],
+                [round(o["x2"]), round(o["y1"])],
+                [round(o["x2"]), round(o["y2"])],
+                [round(o["x1"]), round(o["y2"])],
+            ]
 
         def source(o):
             return {
-                "x": round(o["x"]), "y": round(o["y"]),
+                "x": round(o["x"]),
+                "y": round(o["y"]),
                 "walls": [i for i, w in enumerate(walls) if w["id"] in o["targets"]],
                 "zones": [i for i, z in enumerate(zones) if z["id"] in o["targets"]],
                 "ends_tutorial": any(t in ends for t in o["targets"]),
@@ -468,16 +557,26 @@ class Editor:
         data = {
             "name": safe,
             "player_start": [round(self.player[0]), round(self.player[1])],
-            "enemy_spawning": {"mode": "zones", "zones": [corners(z) for z in zones]} if zones else dict(DEFAULT_SPAWNING),
+            "enemy_spawning": (
+                {"mode": "zones", "zones": [corners(z) for z in zones]}
+                if zones
+                else dict(DEFAULT_SPAWNING)
+            ),
             "walls": [corners(w) for w in walls],
         }
         if goals:
             data["goals"] = [{**source(g), "radius": round(g["r"])} for g in goals]
         if markers:
-            data["enemy_markers"] = [{**source(m), "enemy": m["enemy"]} for m in markers]
+            data["enemy_markers"] = [
+                {**source(m), "enemy": m["enemy"]} for m in markers
+            ]
         data["tutorial"] = dict(self.tutorial)
         levels = copy.deepcopy(data["tutorial"].get("levels", []))
-        while levels and not levels[-1].get("exp") and not any(levels[-1].get("cards", [])):
+        while (
+            levels
+            and not levels[-1].get("exp")
+            and not any(levels[-1].get("cards", []))
+        ):
             levels.pop()
         data["tutorial"]["levels"] = levels
         data["editor_objects"] = copy.deepcopy(self.objects)
@@ -486,7 +585,9 @@ class Editor:
     def save(self):
         safe, data = self.build_data()
         os.makedirs(MAPS_DIR, exist_ok=True)
-        with open(os.path.join(MAPS_DIR, safe + ".json"), "w", encoding="utf-8") as file:
+        with open(
+            os.path.join(MAPS_DIR, safe + ".json"), "w", encoding="utf-8"
+        ) as file:
             json.dump(data, file, indent=2)
         self.meta["name"] = safe
         self.status = f"Saved {safe}.json"
@@ -495,11 +596,15 @@ class Editor:
         with open(path, "r", encoding="utf-8-sig") as file:
             data = json.load(file)
         self.objects, self.next_id = [], 1
-        self.selected = self.drag = self.popup = self.connecting = self.placing = self.typing = None
+        self.selected = self.drag = self.popup = self.connecting = self.placing = (
+            self.typing
+        ) = None
         start = data.get("player_start", [CANVAS_W / 2, CANVAS_H / 2])
         self.player = [float(start[0]), float(start[1])]
         tutorial = data.get("tutorial")
-        self.tutorial = dict(tutorial) if isinstance(tutorial, dict) else {"active": False}
+        self.tutorial = (
+            dict(tutorial) if isinstance(tutorial, dict) else {"active": False}
+        )
         self.tutorial.setdefault("outer_wall_exp", True)
         self.tutorial["waves"] = sanitize_waves(self.tutorial.get("waves"))
         self.tutorial["levels"] = sanitize_levels(self.tutorial.get("levels"))
@@ -513,7 +618,11 @@ class Editor:
 
     def _load_objects(self, items):
         for item in items:
-            if not isinstance(item, dict) or item.get("type") not in TYPES or not isinstance(item.get("id"), int):
+            if (
+                not isinstance(item, dict)
+                or item.get("type") not in TYPES
+                or not isinstance(item.get("id"), int)
+            ):
                 continue
             self.objects.append(item)
             item.setdefault("targets", [])
@@ -534,7 +643,13 @@ def draw_arrow(surf, a, b):
     ang = math.atan2(b[1] - a[1], b[0] - a[0])
     mid = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
     for side in (-2.6, 2.6):
-        pygame.draw.line(surf, LINK_COLOR, mid, (mid[0] + 9 * math.cos(ang + side), mid[1] + 9 * math.sin(ang + side)), 1)
+        pygame.draw.line(
+            surf,
+            LINK_COLOR,
+            mid,
+            (mid[0] + 9 * math.cos(ang + side), mid[1] + 9 * math.sin(ang + side)),
+            1,
+        )
 
 
 def draw_label(surf, text, pos, color=TEXT, size=18):
@@ -546,7 +661,12 @@ def draw_object(surf, o, outline=None):
     _, _, fill, edge = TYPES[o["type"]]
     shape, t = SHAPES[o["type"]], o["type"]
     if shape == "rect":
-        r = pygame.Rect(round(o["x1"]), round(o["y1"]), round(o["x2"] - o["x1"]), round(o["y2"] - o["y1"]))
+        r = pygame.Rect(
+            round(o["x1"]),
+            round(o["y1"]),
+            round(o["x2"] - o["x1"]),
+            round(o["y2"] - o["y1"]),
+        )
         pygame.draw.rect(surf, fill, r)
         pygame.draw.rect(surf, edge, r, 2)
         if t == "kill_zone":
@@ -564,11 +684,21 @@ def draw_object(surf, o, outline=None):
         if t in TRIGGERS:
             if o["fulfilled"]:
                 pygame.draw.circle(surf, (255, 255, 255), c, r + 4, 2)
-            tag = {"trig_move": "MOVE", "trig_attack": "ATTACK", "trig_ability": "ABILITY"}[t]
+            tag = {
+                "trig_move": "MOVE",
+                "trig_attack": "ATTACK",
+                "trig_ability": "ABILITY",
+            }[t]
             if t != "trig_move" and o["count"] > 1:
                 tag += f" x{o['count']}"
             draw_label(surf, tag, c, edge)
-            draw_label(surf, "latch" if o["mode"] == "latch" else f"pulse {o['pulse_ticks']}t", (c[0], c[1] + 14), DIM, 16)
+            draw_label(
+                surf,
+                "latch" if o["mode"] == "latch" else f"pulse {o['pulse_ticks']}t",
+                (c[0], c[1] + 14),
+                DIM,
+                16,
+            )
         elif t == "level_end":
             draw_label(surf, "END", c, edge)
     elif shape == "point":
@@ -576,12 +706,24 @@ def draw_object(surf, o, outline=None):
         pygame.draw.circle(surf, fill, c, POINT_RADIUS)
         pygame.draw.circle(surf, edge, c, POINT_RADIUS, 2)
         if t == "exp_spawner":
-            draw_label(surf, f"EXP {o.get('amount', 5)}x{o.get('count', 1)}", (c[0], c[1] - POINT_RADIUS - 8), edge, 16)
+            draw_label(
+                surf,
+                f"EXP {o.get('amount', 5)}x{o.get('count', 1)}",
+                (c[0], c[1] - POINT_RADIUS - 8),
+                edge,
+                16,
+            )
             draw_label(surf, "XP", c, edge, 16)
         else:
             draw_label(surf, o["enemy"], (c[0], c[1] - POINT_RADIUS - 8), edge, 16)
             mode = o.get("mode", "latch")
-            draw_label(surf, "latch" if mode == "latch" else f"pulse {o.get('pulse_ticks', 30)}t", (c[0], c[1] + POINT_RADIUS + 8), DIM, 16)
+            draw_label(
+                surf,
+                "latch" if mode == "latch" else f"pulse {o.get('pulse_ticks', 30)}t",
+                (c[0], c[1] + POINT_RADIUS + 8),
+                DIM,
+                16,
+            )
     elif shape == "text":
         img = get_font(int(o["size"])).render(o["text"] or "(text)", True, edge)
         surf.blit(img, img.get_rect(center=(round(o["x"]), round(o["y"]))))
@@ -590,15 +732,28 @@ def draw_object(surf, o, outline=None):
         r.center = (round(o["x"]), round(o["y"]))
         pygame.draw.rect(surf, fill, r, border_radius=8)
         pygame.draw.rect(surf, edge, r, 2, border_radius=8)
-        tag = {"wave_trigger": f"WAVE {o.get('wave', 1)}", "level_trigger": f"LV {o.get('level', 2)}"}.get(t)
+        tag = {
+            "wave_trigger": f"WAVE {o.get('wave', 1)}",
+            "level_trigger": f"LV {o.get('level', 2)}",
+        }.get(t)
         draw_label(surf, tag or o["gate"], r.center, edge, 18 if tag else 22)
     if outline:
         x1, y1, x2, y2 = Editor.bounds(o)
-        pygame.draw.rect(surf, outline, (round(x1) - 3, round(y1) - 3, round(x2 - x1) + 6, round(y2 - y1) + 6), 1)
+        pygame.draw.rect(
+            surf,
+            outline,
+            (round(x1) - 3, round(y1) - 3, round(x2 - x1) + 6, round(y2 - y1) + 6),
+            1,
+        )
 
 
 def draw_button(screen, rect, label, mouse, active=False, size=22):
-    pygame.draw.rect(screen, GOLD if active else (BTN_HOVER if rect.collidepoint(mouse) else BTN), rect, border_radius=5)
+    pygame.draw.rect(
+        screen,
+        GOLD if active else (BTN_HOVER if rect.collidepoint(mouse) else BTN),
+        rect,
+        border_radius=5,
+    )
     draw_label(screen, label, rect.center, (20, 20, 20) if active else TEXT, size)
 
 
@@ -678,23 +833,69 @@ class App:
         self.screen.fill(BG)
         draw_label(self.screen, "Map Editor", (WIN_W / 2, 50), TEXT, 56)
         draw_button(self.screen, self.new_btn, "New Map", mouse)
-        draw_button(self.screen, self.mode_btn, "Showing: Tutorial Levels" if self.tutorial_mode else "Showing: Main Levels", mouse)
+        draw_button(
+            self.screen,
+            self.mode_btn,
+            (
+                "Showing: Tutorial Levels"
+                if self.tutorial_mode
+                else "Showing: Main Levels"
+            ),
+            mouse,
+        )
         pygame.draw.rect(self.screen, PANEL, self.list_rect)
         self.screen.set_clip(self.list_rect)
         for i, (name, _) in enumerate(self.entries):
-            row = pygame.Rect(self.list_rect.x + 6, self.list_rect.y + i * 44 - self.scroll + 3, self.list_rect.width - 22, 38)
-            pygame.draw.rect(self.screen, BTN_HOVER if row.collidepoint(mouse) and self.list_rect.collidepoint(mouse) else BTN, row, border_radius=5)
-            self.screen.blit(get_font(26).render(name, True, TEXT), (row.x + 12, row.y + 10))
+            row = pygame.Rect(
+                self.list_rect.x + 6,
+                self.list_rect.y + i * 44 - self.scroll + 3,
+                self.list_rect.width - 22,
+                38,
+            )
+            pygame.draw.rect(
+                self.screen,
+                (
+                    BTN_HOVER
+                    if row.collidepoint(mouse) and self.list_rect.collidepoint(mouse)
+                    else BTN
+                ),
+                row,
+                border_radius=5,
+            )
+            self.screen.blit(
+                get_font(26).render(name, True, TEXT), (row.x + 12, row.y + 10)
+            )
         if not self.entries:
-            draw_label(self.screen, "No levels in this category", self.list_rect.center, DIM, 26)
+            draw_label(
+                self.screen,
+                "No levels in this category",
+                self.list_rect.center,
+                DIM,
+                26,
+            )
         self.screen.set_clip(None)
         pygame.draw.rect(self.screen, DIM, self.list_rect, 1)
         if self.max_scroll() > 0:
-            bar_h = max(30, self.list_rect.height * self.list_rect.height // (len(self.entries) * 44))
-            bar_y = self.list_rect.y + (self.list_rect.height - bar_h) * self.scroll // self.max_scroll()
-            pygame.draw.rect(self.screen, DIM, (self.list_rect.right - 12, bar_y, 8, bar_h), border_radius=4)
+            bar_h = max(
+                30,
+                self.list_rect.height
+                * self.list_rect.height
+                // (len(self.entries) * 44),
+            )
+            bar_y = (
+                self.list_rect.y
+                + (self.list_rect.height - bar_h) * self.scroll // self.max_scroll()
+            )
+            pygame.draw.rect(
+                self.screen,
+                DIM,
+                (self.list_rect.right - 12, bar_y, 8, bar_h),
+                border_radius=4,
+            )
         if self.menu_error:
-            draw_label(self.screen, self.menu_error, (WIN_W / 2, 635), (255, 120, 120), 24)
+            draw_label(
+                self.screen, self.menu_error, (WIN_W / 2, 635), (255, 120, 120), 24
+            )
 
     # ---- editor ----
     def drawer_rect(self):
@@ -709,7 +910,14 @@ class App:
         buttons = []
         for i, (label, typ, extras) in enumerate(TABS[self.tab][1]):
             col, row = i % 7, i // 7
-            buttons.append((pygame.Rect(14 + col * 140, top + row * 48, 130, 40), label, typ, extras))
+            buttons.append(
+                (
+                    pygame.Rect(14 + col * 140, top + row * 48, 130, 40),
+                    label,
+                    typ,
+                    extras,
+                )
+            )
         return buttons
 
     def tab_rects(self):
@@ -727,7 +935,9 @@ class App:
                 ed.popup_click(sx, sy)
                 return
             ed.popup = None
-        if ed.typing is not None and not (event.button == 1 and self.name_box.collidepoint(sx, sy)):
+        if ed.typing is not None and not (
+            event.button == 1 and self.name_box.collidepoint(sx, sy)
+        ):
             ed.typing = None
         if sy < TOP_H:
             if event.button != 1:
@@ -743,8 +953,14 @@ class App:
                 ed.tutorial["active"] = not ed.tutorial.get("active", False)
             elif self.exp_btn.collidepoint(sx, sy) and ed.tutorial.get("active"):
                 ed.tutorial["exp"] = not ed.tutorial.get("exp", False)
-            elif self.outer_wall_exp_btn.collidepoint(sx, sy) and ed.tutorial.get("active") and ed.tutorial.get("exp"):
-                ed.tutorial["outer_wall_exp"] = not ed.tutorial.get("outer_wall_exp", True)
+            elif (
+                self.outer_wall_exp_btn.collidepoint(sx, sy)
+                and ed.tutorial.get("active")
+                and ed.tutorial.get("exp")
+            ):
+                ed.tutorial["outer_wall_exp"] = not ed.tutorial.get(
+                    "outer_wall_exp", True
+                )
             elif self.waves_btn.collidepoint(sx, sy) and ed.tutorial.get("active"):
                 self.open_panel("waves")
             elif self.levels_btn.collidepoint(sx, sy) and ed.tutorial.get("active"):
@@ -803,7 +1019,12 @@ class App:
 
     # ---- info panel (name, description, loadout, icon) ----
     def icon_rect(self):
-        return pygame.Rect(self.panel_rect.x + 470, self.panel_rect.y + 70, ICON_SIZE * ICON_CELL, ICON_SIZE * ICON_CELL)
+        return pygame.Rect(
+            self.panel_rect.x + 470,
+            self.panel_rect.y + 70,
+            ICON_SIZE * ICON_CELL,
+            ICON_SIZE * ICON_CELL,
+        )
 
     def swatch_rect(self, i):
         P = self.panel_rect
@@ -814,8 +1035,14 @@ class App:
         if not rect.collidepoint(pos):
             return
         tut = self.editor.tutorial
-        rows = [list(r) for r in tut["icon"]] if tut.get("icon") else [["0"] * ICON_SIZE for _ in range(ICON_SIZE)]
-        rows[(pos[1] - rect.y) // ICON_CELL][(pos[0] - rect.x) // ICON_CELL] = "0123456789abcdef"[color]
+        rows = (
+            [list(r) for r in tut["icon"]]
+            if tut.get("icon")
+            else [["0"] * ICON_SIZE for _ in range(ICON_SIZE)]
+        )
+        rows[(pos[1] - rect.y) // ICON_CELL][(pos[0] - rect.x) // ICON_CELL] = (
+            "0123456789abcdef"[color]
+        )
         tut["icon"] = ["".join(r) for r in rows]
 
     def info_click(self, event):
@@ -837,11 +1064,13 @@ class App:
             def go(button):
                 index = choices.index(tut[key]) if tut.get(key) in choices else 0
                 tut[key] = choices[(index + (1 if button == 1 else -1)) % len(choices)]
+
             return go
 
         def bump(sign):
             def go(_):
                 tut["health"] = clamp(int(tut.get("health", 10)) + sign, 1, 99)
+
             return go
 
         def clear(_):
@@ -850,16 +1079,47 @@ class App:
         def field(key):
             def go(_):
                 ed.begin_typing(tut, key)
+
             return go
 
         typing_name = ed.typing is not None and ed.typing[1] == "name"
-        items.append((pygame.Rect(P.x + 16, P.y + 70, 420, 30), tut["name"] + ("|" if typing_name else ""), typing_name, field("name")))
-        items.append((pygame.Rect(P.x + 16, P.y + 140, 420, 150), "", False, field("description")))
-        items.append((pygame.Rect(P.x + 16, P.y + 330, 200, 30), "Body: " + str(tut["body"]), False, cycle("body", BODY_NAMES)))
-        items.append((pygame.Rect(P.x + 236, P.y + 330, 200, 30), "Gun: " + str(tut["gun"]), False, cycle("gun", GUN_NAMES)))
+        items.append(
+            (
+                pygame.Rect(P.x + 16, P.y + 70, 420, 30),
+                tut["name"] + ("|" if typing_name else ""),
+                typing_name,
+                field("name"),
+            )
+        )
+        items.append(
+            (
+                pygame.Rect(P.x + 16, P.y + 140, 420, 150),
+                "",
+                False,
+                field("description"),
+            )
+        )
+        items.append(
+            (
+                pygame.Rect(P.x + 16, P.y + 330, 200, 30),
+                "Body: " + str(tut["body"]),
+                False,
+                cycle("body", BODY_NAMES),
+            )
+        )
+        items.append(
+            (
+                pygame.Rect(P.x + 236, P.y + 330, 200, 30),
+                "Gun: " + str(tut["gun"]),
+                False,
+                cycle("gun", GUN_NAMES),
+            )
+        )
         items.append((pygame.Rect(P.x + 16, P.y + 390, 32, 30), "-", False, bump(-1)))
         items.append((pygame.Rect(P.x + 120, P.y + 390, 32, 30), "+", False, bump(1)))
-        items.append((pygame.Rect(P.x + 16, P.y + 440, 200, 30), "Clear Icon", False, clear))
+        items.append(
+            (pygame.Rect(P.x + 16, P.y + 440, 200, 30), "Clear Icon", False, clear)
+        )
         return items
 
     def wrap_text(self, text, font, width):
@@ -878,35 +1138,74 @@ class App:
         tut, P, ed = self.editor.tutorial, self.panel_rect, self.editor
         draw_label(self.screen, "Tutorial Info", (P.x + 440, P.y + 24), TEXT, 28)
         draw_label(self.screen, "Display name", (P.x + 70, P.y + 56), DIM, 20)
-        draw_label(self.screen, "Displayed description", (P.x + 100, P.y + 126), DIM, 20)
+        draw_label(
+            self.screen, "Displayed description", (P.x + 100, P.y + 126), DIM, 20
+        )
         draw_label(self.screen, "Starting loadout", (P.x + 80, P.y + 316), DIM, 20)
-        draw_label(self.screen, f"Health: {tut.get('health', 10)}", (P.x + 84, P.y + 405), TEXT, 22)
-        draw_label(self.screen, "Map icon (16x16): left-click paints, right-click erases", (P.x + 650, P.y + 56), DIM, 20)
+        draw_label(
+            self.screen,
+            f"Health: {tut.get('health', 10)}",
+            (P.x + 84, P.y + 405),
+            TEXT,
+            22,
+        )
+        draw_label(
+            self.screen,
+            "Map icon (16x16): left-click paints, right-click erases",
+            (P.x + 650, P.y + 56),
+            DIM,
+            20,
+        )
         typing_desc = ed.typing is not None and ed.typing[1] == "description"
         font = get_font(21)
         box = pygame.Rect(P.x + 16, P.y + 140, 420, 150)
         pygame.draw.rect(self.screen, GOLD if typing_desc else (120, 125, 150), box, 2)
         text = tut.get("description", "") + ("|" if typing_desc else "")
         for n, line in enumerate(self.wrap_text(text, font, box.width - 16)[:6]):
-            self.screen.blit(font.render(line, True, TEXT), (box.x + 8, box.y + 8 + n * 22))
+            self.screen.blit(
+                font.render(line, True, TEXT), (box.x + 8, box.y + 8 + n * 22)
+            )
 
         rect = self.icon_rect()
         rows = tut.get("icon") or ["0" * ICON_SIZE] * ICON_SIZE
         for y, row in enumerate(rows):
             for x, digit in enumerate(row):
-                cell = pygame.Rect(rect.x + x * ICON_CELL, rect.y + y * ICON_CELL, ICON_CELL, ICON_CELL)
+                cell = pygame.Rect(
+                    rect.x + x * ICON_CELL, rect.y + y * ICON_CELL, ICON_CELL, ICON_CELL
+                )
                 color = ICON_PALETTE[int(digit, 16)]
-                pygame.draw.rect(self.screen, color or ((60, 63, 78) if (x + y) % 2 == 0 else (45, 48, 62)), cell)
+                pygame.draw.rect(
+                    self.screen,
+                    color or ((60, 63, 78) if (x + y) % 2 == 0 else (45, 48, 62)),
+                    cell,
+                )
         for k in range(ICON_SIZE + 1):
-            pygame.draw.line(self.screen, (30, 32, 44), (rect.x + k * ICON_CELL, rect.y), (rect.x + k * ICON_CELL, rect.bottom))
-            pygame.draw.line(self.screen, (30, 32, 44), (rect.x, rect.y + k * ICON_CELL), (rect.right, rect.y + k * ICON_CELL))
+            pygame.draw.line(
+                self.screen,
+                (30, 32, 44),
+                (rect.x + k * ICON_CELL, rect.y),
+                (rect.x + k * ICON_CELL, rect.bottom),
+            )
+            pygame.draw.line(
+                self.screen,
+                (30, 32, 44),
+                (rect.x, rect.y + k * ICON_CELL),
+                (rect.right, rect.y + k * ICON_CELL),
+            )
         pygame.draw.rect(self.screen, DIM, rect, 2)
         for i, color in enumerate(ICON_PALETTE):
             swatch = self.swatch_rect(i)
             pygame.draw.rect(self.screen, color or (45, 48, 62), swatch)
             if color is None:
-                pygame.draw.line(self.screen, (200, 60, 60), swatch.topleft, swatch.bottomright, 2)
-            pygame.draw.rect(self.screen, GOLD if i == self.icon_color else (30, 32, 44), swatch, 3 if i == self.icon_color else 1)
+                pygame.draw.line(
+                    self.screen, (200, 60, 60), swatch.topleft, swatch.bottomright, 2
+                )
+            pygame.draw.rect(
+                self.screen,
+                GOLD if i == self.icon_color else (30, 32, 44),
+                swatch,
+                3 if i == self.icon_color else 1,
+            )
 
         preview = pygame.Surface((ICON_SIZE, ICON_SIZE), pygame.SRCALPHA)
         for y, row in enumerate(rows):
@@ -915,12 +1214,16 @@ class App:
                 if color is not None:
                     preview.set_at((x, y), color)
         pygame.draw.rect(self.screen, (45, 48, 62), (P.x + 300, P.y + 430, 128, 128))
-        self.screen.blit(pygame.transform.scale(preview, (128, 128)), (P.x + 300, P.y + 430))
+        self.screen.blit(
+            pygame.transform.scale(preview, (128, 128)), (P.x + 300, P.y + 430)
+        )
         pygame.draw.rect(self.screen, DIM, (P.x + 300, P.y + 430, 128, 128), 2)
 
     def panel_scroll_by(self, amount):
         tut = self.editor.tutorial
-        limit = max(0, len(tut["waves"]) - 12) if self.panel == "waves" else MAX_LEVELS - 11
+        limit = (
+            max(0, len(tut["waves"]) - 12) if self.panel == "waves" else MAX_LEVELS - 11
+        )
         self.panel_scroll = clamp(self.panel_scroll - amount, 0, limit)
 
     def panel_items(self):
@@ -932,7 +1235,9 @@ class App:
         def close(_):
             self.panel = None
 
-        items.append((pygame.Rect(P.right - 90, P.y + 10, 76, 28), "Close", False, close))
+        items.append(
+            (pygame.Rect(P.right - 90, P.y + 10, 76, 28), "Close", False, close)
+        )
         if self.panel == "info":
             return items + self.info_items(), labels
         if self.panel == "waves":
@@ -942,10 +1247,22 @@ class App:
             def toggle(_):
                 tut["waves_enabled"] = not tut.get("waves_enabled", False)
 
-            items.append((pygame.Rect(P.x + 16, P.y + 10, 180, 28), "Waves: " + ("On" if tut.get("waves_enabled") else "Off"),
-                          bool(tut.get("waves_enabled")), toggle))
-            labels.append(("Wave 1 spawns at the start; each next wave spawns 1s after the previous one is beaten.",
-                           (P.x + 560, P.y + 24), DIM, 20))
+            items.append(
+                (
+                    pygame.Rect(P.x + 16, P.y + 10, 180, 28),
+                    "Waves: " + ("On" if tut.get("waves_enabled") else "Off"),
+                    bool(tut.get("waves_enabled")),
+                    toggle,
+                )
+            )
+            labels.append(
+                (
+                    "Wave 1 spawns at the start; each next wave spawns 1s after the previous one is beaten.",
+                    (P.x + 560, P.y + 24),
+                    DIM,
+                    20,
+                )
+            )
             for k in range(12):
                 i = self.panel_scroll + k
                 if i >= len(waves):
@@ -954,8 +1271,14 @@ class App:
                 def select(_, i=i):
                     self.panel_sel = i
 
-                items.append((pygame.Rect(P.x + 16, P.y + 60 + k * 32, 210, 28), f"Wave {i + 1} ({sum(waves[i].values())})",
-                              i == self.panel_sel, select))
+                items.append(
+                    (
+                        pygame.Rect(P.x + 16, P.y + 60 + k * 32, 210, 28),
+                        f"Wave {i + 1} ({sum(waves[i].values())})",
+                        i == self.panel_sel,
+                        select,
+                    )
+                )
 
             def add(_):
                 if len(waves) < 99:
@@ -966,13 +1289,31 @@ class App:
             def remove(_):
                 if waves:
                     del waves[min(self.panel_sel, len(waves) - 1)]
-                    self.panel_scroll = clamp(self.panel_scroll, 0, max(0, len(waves) - 12))
+                    self.panel_scroll = clamp(
+                        self.panel_scroll, 0, max(0, len(waves) - 12)
+                    )
 
-            items.append((pygame.Rect(P.x + 16, P.bottom - 80, 210, 28), "Add Wave", False, add))
-            items.append((pygame.Rect(P.x + 16, P.bottom - 44, 210, 28), "Remove Selected Wave", False, remove))
+            items.append(
+                (pygame.Rect(P.x + 16, P.bottom - 80, 210, 28), "Add Wave", False, add)
+            )
+            items.append(
+                (
+                    pygame.Rect(P.x + 16, P.bottom - 44, 210, 28),
+                    "Remove Selected Wave",
+                    False,
+                    remove,
+                )
+            )
             if waves:
                 wave = waves[self.panel_sel]
-                labels.append((f"Wave {self.panel_sel + 1} enemies (total {sum(wave.values())})", (P.x + 400, P.y + 76), TEXT, 26))
+                labels.append(
+                    (
+                        f"Wave {self.panel_sel + 1} enemies (total {sum(wave.values())})",
+                        (P.x + 400, P.y + 76),
+                        TEXT,
+                        26,
+                    )
+                )
                 for k, enemy in enumerate(ENEMY_TYPES):
                     y = P.y + 110 + k * 44
                     labels.append((enemy, (P.x + 300, y + 16), TEXT, 24))
@@ -985,22 +1326,55 @@ class App:
                         else:
                             wave.pop(enemy, None)
 
-                    items.append((pygame.Rect(P.x + 400, y, 32, 32), "-", False, lambda b, e=enemy: bump(b, e, -1)))
-                    labels.append((str(wave.get(enemy, 0)), (P.x + 466, y + 16), GOLD, 26))
-                    items.append((pygame.Rect(P.x + 500, y, 32, 32), "+", False, lambda b, e=enemy: bump(b, e, 1)))
-                labels.append(("Shift-click +/- changes by 5", (P.x + 700, P.y + 76), DIM, 20))
+                    items.append(
+                        (
+                            pygame.Rect(P.x + 400, y, 32, 32),
+                            "-",
+                            False,
+                            lambda b, e=enemy: bump(b, e, -1),
+                        )
+                    )
+                    labels.append(
+                        (str(wave.get(enemy, 0)), (P.x + 466, y + 16), GOLD, 26)
+                    )
+                    items.append(
+                        (
+                            pygame.Rect(P.x + 500, y, 32, 32),
+                            "+",
+                            False,
+                            lambda b, e=enemy: bump(b, e, 1),
+                        )
+                    )
+                labels.append(
+                    ("Shift-click +/- changes by 5", (P.x + 700, P.y + 76), DIM, 20)
+                )
             else:
                 labels.append(("Add a wave to start", (P.x + 500, P.y + 200), DIM, 26))
         else:
             levels = tut["levels"]
             while len(levels) < self.panel_scroll + 11:
                 levels.append({"exp": None, "cards": [None] * CARDS_PER_LEVEL})
-            labels.append(("Exp needed and upgrade cards per level-up (mouse wheel scrolls)", (P.x + 330, P.y + 24), TEXT, 24))
-            labels.append(("Auto exp = 10, then x1.4 per level. Click a card to cycle, right-click to cycle back. Shift = +/-1.",
-                           (P.x + 440, P.y + 62), DIM, 20))
+            labels.append(
+                (
+                    "Exp needed and upgrade cards per level-up (mouse wheel scrolls)",
+                    (P.x + 330, P.y + 24),
+                    TEXT,
+                    24,
+                )
+            )
+            labels.append(
+                (
+                    "Auto exp = 10, then x1.4 per level. Click a card to cycle, right-click to cycle back. Shift = +/-1.",
+                    (P.x + 440, P.y + 62),
+                    DIM,
+                    20,
+                )
+            )
             labels.append(("Exp needed", (P.x + 190, P.y + 90), DIM, 20))
             for j in range(CARDS_PER_LEVEL):
-                labels.append((f"Card {j + 1}", (P.x + 440 + j * 160, P.y + 90), DIM, 20))
+                labels.append(
+                    (f"Card {j + 1}", (P.x + 440 + j * 160, P.y + 90), DIM, 20)
+                )
             names = [None] + [u.name for u in total_Upgrades]
             for k in range(11):
                 i = self.panel_scroll + k
@@ -1010,22 +1384,55 @@ class App:
                 labels.append((f"Lv {i + 1} to {i + 2}", (P.x + 62, y + 16), TEXT, 24))
 
                 def bump(_, i=i, sign=0):
-                    levels[i]["exp"] = max(1, level_requirement(levels, i + 1) + sign * (1 if shift else 5))
+                    levels[i]["exp"] = max(
+                        1, level_requirement(levels, i + 1) + sign * (1 if shift else 5)
+                    )
 
                 def auto(_, i=i):
                     levels[i]["exp"] = None
 
-                items.append((pygame.Rect(P.x + 110, y, 28, 32), "-", False, lambda b, i=i: bump(b, i, -1)))
-                labels.append((str(effective) + ("" if entry["exp"] else " (auto)"), (P.x + 190, y + 16), GOLD if entry["exp"] else DIM, 22))
-                items.append((pygame.Rect(P.x + 242, y, 28, 32), "+", False, lambda b, i=i: bump(b, i, 1)))
+                items.append(
+                    (
+                        pygame.Rect(P.x + 110, y, 28, 32),
+                        "-",
+                        False,
+                        lambda b, i=i: bump(b, i, -1),
+                    )
+                )
+                labels.append(
+                    (
+                        str(effective) + ("" if entry["exp"] else " (auto)"),
+                        (P.x + 190, y + 16),
+                        GOLD if entry["exp"] else DIM,
+                        22,
+                    )
+                )
+                items.append(
+                    (
+                        pygame.Rect(P.x + 242, y, 28, 32),
+                        "+",
+                        False,
+                        lambda b, i=i: bump(b, i, 1),
+                    )
+                )
                 items.append((pygame.Rect(P.x + 276, y, 54, 32), "Auto", False, auto))
                 for j in range(CARDS_PER_LEVEL):
+
                     def cycle(button, i=i, j=j):
                         cards = levels[i]["cards"]
                         index = names.index(cards[j]) if cards[j] in names else 0
-                        cards[j] = names[(index + (1 if button == 1 else -1)) % len(names)]
+                        cards[j] = names[
+                            (index + (1 if button == 1 else -1)) % len(names)
+                        ]
 
-                    items.append((pygame.Rect(P.x + 362 + j * 160, y, 154, 32), entry["cards"][j] or "Random", entry["cards"][j] is not None, cycle))
+                    items.append(
+                        (
+                            pygame.Rect(P.x + 362 + j * 160, y, 154, 32),
+                            entry["cards"][j] or "Random",
+                            entry["cards"][j] is not None,
+                            cycle,
+                        )
+                    )
         return items, labels
 
     def panel_click(self, event):
@@ -1065,7 +1472,11 @@ class App:
                 ed.typing = None
             elif event.key == pygame.K_BACKSPACE:
                 target[key] = target[key][:-1]
-            elif event.unicode and event.unicode.isprintable() and len(target[key]) < TEXT_LIMITS.get(key, 40):
+            elif (
+                event.unicode
+                and event.unicode.isprintable()
+                and len(target[key]) < TEXT_LIMITS.get(key, 40)
+            ):
                 target[key] += event.unicode
             return
         if self.panel is not None:
@@ -1098,14 +1509,20 @@ class App:
                 if t is not None:
                     draw_arrow(canvas, ed.center(o), ed.center(t))
         for o in ed.objects:
-            draw_object(canvas, o, GOLD if o is ed.selected else (LINK_COLOR if o is hovered else None))
+            draw_object(
+                canvas,
+                o,
+                GOLD if o is ed.selected else (LINK_COLOR if o is hovered else None),
+            )
         if ed.selected in ed.objects:
             for hx, hy in ed.handles(ed.selected):
                 pygame.draw.rect(canvas, GOLD, (round(hx) - 5, round(hy) - 5, 10, 10))
         if ed.connecting is not None:
             pygame.draw.line(canvas, LINK_COLOR, ed.center(ed.connecting), (mx, my), 1)
             x1, y1, x2, y2 = ed.bounds(ed.connecting)
-            pygame.draw.rect(canvas, LINK_COLOR, (x1 - 5, y1 - 5, x2 - x1 + 10, y2 - y1 + 10), 2)
+            pygame.draw.rect(
+                canvas, LINK_COLOR, (x1 - 5, y1 - 5, x2 - x1 + 10, y2 - y1 + 10), 2
+            )
         px, py = round(ed.player[0]), round(ed.player[1])
         pygame.draw.circle(canvas, (60, 200, 90), (px, py), PLAYER_RADIUS)
         pygame.draw.circle(canvas, (220, 255, 225), (px, py), PLAYER_RADIUS, 2)
@@ -1117,22 +1534,49 @@ class App:
         draw_button(self.screen, self.back_btn, "Back", mouse, size=20)
         typing_name = ed.typing is not None and ed.typing[1] == "name"
         pygame.draw.rect(self.screen, (15, 17, 26), self.name_box)
-        pygame.draw.rect(self.screen, GOLD if typing_name else (120, 125, 150), self.name_box, 2)
-        self.screen.blit(get_font(22).render(ed.meta["name"] + ("|" if typing_name else ""), True, TEXT), (self.name_box.x + 6, self.name_box.y + 5))
+        pygame.draw.rect(
+            self.screen, GOLD if typing_name else (120, 125, 150), self.name_box, 2
+        )
+        self.screen.blit(
+            get_font(22).render(
+                ed.meta["name"] + ("|" if typing_name else ""), True, TEXT
+            ),
+            (self.name_box.x + 6, self.name_box.y + 5),
+        )
         draw_button(self.screen, self.save_btn, "Save", mouse, size=20)
-        draw_button(self.screen, self.tut_btn, "Tutorial: " + ("On" if ed.tutorial.get("active") else "Off"), mouse, size=20)
+        draw_button(
+            self.screen,
+            self.tut_btn,
+            "Tutorial: " + ("On" if ed.tutorial.get("active") else "Off"),
+            mouse,
+            size=20,
+        )
         if ed.tutorial.get("active"):
-            draw_button(self.screen, self.exp_btn, "EXP: " + ("On" if ed.tutorial.get("exp") else "Off"), mouse, size=20)
+            draw_button(
+                self.screen,
+                self.exp_btn,
+                "EXP: " + ("On" if ed.tutorial.get("exp") else "Off"),
+                mouse,
+                size=20,
+            )
             if ed.tutorial.get("exp"):
                 draw_button(
                     self.screen,
                     self.outer_wall_exp_btn,
-                    "Outer EXP: " + ("On" if ed.tutorial.get("outer_wall_exp", True) else "Off"),
+                    "Outer EXP: "
+                    + ("On" if ed.tutorial.get("outer_wall_exp", True) else "Off"),
                     mouse,
                     size=18,
                 )
         if ed.tutorial.get("active"):
-            draw_button(self.screen, self.waves_btn, "Waves", mouse, ed.tutorial.get("waves_enabled", False), size=20)
+            draw_button(
+                self.screen,
+                self.waves_btn,
+                "Waves",
+                mouse,
+                ed.tutorial.get("waves_enabled", False),
+                size=20,
+            )
             draw_button(self.screen, self.levels_btn, "Levels", mouse, size=20)
             draw_button(self.screen, self.info_btn, "Info", mouse, size=20)
         self.screen.set_clip(pygame.Rect(840, 0, WIN_W - 840, TOP_H))
@@ -1149,8 +1593,21 @@ class App:
         drawer = self.drawer_rect()
         if drawer.height <= 0:
             hint = self.hint_rect()
-            pygame.draw.rect(self.screen, (18, 20, 30), hint, border_top_left_radius=8, border_top_right_radius=8)
-            pygame.draw.rect(self.screen, DIM, hint, 1, border_top_left_radius=8, border_top_right_radius=8)
+            pygame.draw.rect(
+                self.screen,
+                (18, 20, 30),
+                hint,
+                border_top_left_radius=8,
+                border_top_right_radius=8,
+            )
+            pygame.draw.rect(
+                self.screen,
+                DIM,
+                hint,
+                1,
+                border_top_left_radius=8,
+                border_top_right_radius=8,
+            )
             draw_label(self.screen, "Hover here for objects", hint.center, TEXT, 18)
             return
         pygame.draw.rect(self.screen, (18, 20, 30), drawer)
@@ -1158,37 +1615,74 @@ class App:
         self.screen.set_clip(drawer)
         for rect, label, typ, _ in self.drawer_buttons():
             draw_button(self.screen, rect, label, mouse, size=20)
-            pygame.draw.rect(self.screen, TYPES[typ][3], (rect.x, rect.bottom - 4, rect.width, 4))
+            pygame.draw.rect(
+                self.screen, TYPES[typ][3], (rect.x, rect.bottom - 4, rect.width, 4)
+            )
         for i, rect in enumerate(self.tab_rects()):
             pygame.draw.rect(self.screen, GOLD if i == self.tab else BTN, rect)
             pygame.draw.rect(self.screen, (18, 20, 30), rect, 1)
-            draw_label(self.screen, TABS[i][0], rect.center, (20, 20, 20) if i == self.tab else TEXT, 22)
+            draw_label(
+                self.screen,
+                TABS[i][0],
+                rect.center,
+                (20, 20, 20) if i == self.tab else TEXT,
+                22,
+            )
         self.screen.set_clip(None)
 
     def draw_popup(self, mouse):
         rect = self.editor.popup_rect()
-        for i, (text, kind, _, _) in enumerate(self.editor.rows(self.editor.popup["obj"])):
+        for i, (text, kind, _, _) in enumerate(
+            self.editor.rows(self.editor.popup["obj"])
+        ):
             row = pygame.Rect(rect.x, rect.y + i * ROW_H, POPUP_W, ROW_H)
-            pygame.draw.rect(self.screen, BTN_HOVER if row.collidepoint(mouse) and kind != "num" else (45, 49, 68), row)
+            pygame.draw.rect(
+                self.screen,
+                (
+                    BTN_HOVER
+                    if row.collidepoint(mouse) and kind != "num"
+                    else (45, 49, 68)
+                ),
+                row,
+            )
             pygame.draw.rect(self.screen, (170, 175, 200), row, 1)
             typing = self.editor.typing is not None and kind == "text"
-            self.screen.blit(get_font(21).render(text + ("|" if typing else ""), True, TEXT), (row.x + 8, row.y + 6))
+            self.screen.blit(
+                get_font(21).render(text + ("|" if typing else ""), True, TEXT),
+                (row.x + 8, row.y + 6),
+            )
             if kind == "num":
                 for j, sign in enumerate("-+"):
                     box = pygame.Rect(row.right - 56 + j * 28, row.y + 2, 26, ROW_H - 4)
-                    pygame.draw.rect(self.screen, BTN_HOVER if box.collidepoint(mouse) else BTN, box, border_radius=4)
+                    pygame.draw.rect(
+                        self.screen,
+                        BTN_HOVER if box.collidepoint(mouse) else BTN,
+                        box,
+                        border_radius=4,
+                    )
                     draw_label(self.screen, sign, box.center, TEXT, 24)
 
     def update_drawer(self, mouse):
         ed = self.editor
         if self.drawer_open:
             # stay open while the mouse is over the menu (with a margin so the top edge doesn't flicker)
-            if mouse[1] < WIN_H - DRAWER_H - DRAWER_MARGIN or not pygame.mouse.get_focused():
+            if (
+                mouse[1] < WIN_H - DRAWER_H - DRAWER_MARGIN
+                or not pygame.mouse.get_focused()
+            ):
                 self.drawer_open = False
-        elif (mouse[1] >= WIN_H - EDGE_ZONE or self.hint_rect().collidepoint(mouse)) and pygame.mouse.get_focused() and ed.popup is None and ed.drag is None and ed.placing is None:
+        elif (
+            (mouse[1] >= WIN_H - EDGE_ZONE or self.hint_rect().collidepoint(mouse))
+            and pygame.mouse.get_focused()
+            and ed.popup is None
+            and ed.drag is None
+            and ed.placing is None
+        ):
             self.drawer_open = True
         target = 1.0 if self.drawer_open else 0.0
-        self.drawer_t = clamp(self.drawer_t + (0.2 if target > self.drawer_t else -0.2), 0.0, 1.0)
+        self.drawer_t = clamp(
+            self.drawer_t + (0.2 if target > self.drawer_t else -0.2), 0.0, 1.0
+        )
 
     def run(self):
         running = True
@@ -1201,7 +1695,9 @@ class App:
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         self.menu_click(event.pos)
                     elif event.type == pygame.MOUSEWHEEL:
-                        self.scroll = clamp(self.scroll - event.y * 40, 0, self.max_scroll())
+                        self.scroll = clamp(
+                            self.scroll - event.y * 40, 0, self.max_scroll()
+                        )
                 else:
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         self.editor_mouse_down(event)
