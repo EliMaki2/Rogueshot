@@ -1,4 +1,5 @@
 import math
+from helpers import Vector
 import pygame
 import random
 from Enemies.particles import particles
@@ -50,13 +51,13 @@ def _distance_to_segment(point_x, point_y, start_x, start_y, end_x, end_y):
     segment_y = end_y - start_y
     length_squared = segment_x * segment_x + segment_y * segment_y
     if length_squared == 0:
-        return Vector(point_x - start_x, point_y - start_y).magnitude()
+        return Vector(point_x - start_x, point_y - start_y).magnitude
 
     projection = ((point_x - start_x) * segment_x + (point_y - start_y) * segment_y) / length_squared
     projection = max(0, min(1, projection))
     closest_x = start_x + segment_x * projection
     closest_y = start_y + segment_y * projection
-    return Vector(point_x - closest_x, point_y - closest_y).magnitude()
+    return Vector(point_x - closest_x, point_y - closest_y).magnitude
 
 
 def _spawn_laser_particles(start_x, start_y, direction, length, color, count=6, size=2):
@@ -68,25 +69,6 @@ def _spawn_laser_particles(start_x, start_y, direction, length, color, count=6, 
         effect = particles_mod.HitParticle(particle_x, particle_y, size, color)
         effect.direction = Vector(random.uniform(-0.15, 0.15), random.uniform(-0.15, 0.15))
         particles.append(effect)
-
-class Vector:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-    def add(self, other):
-        return Vector(self.x + other.x, self.y + other.y)
-    def subtract(self, other):
-        return Vector(self.x - other.x, self.y - other.y)
-    def multiply(self, scalar):
-        return Vector(self.x * scalar, self.y * scalar)
-    def normalize(self):
-        magnitude = (self.x ** 2 + self.y ** 2) ** 0.5
-        if magnitude == 0:
-            return Vector(0, 0)
-        return Vector(self.x / magnitude, self.y / magnitude)
-    def magnitude(self):
-        return (self.x ** 2 + self.y ** 2) ** 0.5
-
 
 def _split_enemy(enemy, size_ratio=0.6, min_size=8):
     """Replace an enemy with two smaller copies, each with half the health."""
@@ -327,7 +309,7 @@ class Enemy:
         if self.avoids_walls and walls_mod.walls:
             direction = self.steer_around_walls(direction)
         self.velocity = self.velocity.add(direction.multiply(self.speed))
-        if self.velocity.magnitude() > self.speed:
+        if self.velocity.magnitude > self.speed:
             self.velocity = self.velocity.normalize().multiply(self.speed)
 
     def steer_around_walls(self, to_player):
@@ -382,7 +364,7 @@ class Enemy:
             direction = Vector(player.x - self.x, player.y - self.y).normalize()
             player.velocity = player.velocity.add(direction.multiply(self.speed * 2))
             player.hurt(self)
-            if self.velocity.magnitude() != 0:
+            if self.velocity.magnitude != 0:
                 self.velocity = self.velocity.multiply(-2)
             else:
                 self.velocity = Vector(random.uniform(-1, 1), random.uniform(-1, 1)).normalize().multiply(-2)
@@ -407,7 +389,7 @@ class Enemy:
     def collide(self):
         for other in enemies:
             if other != self:
-                distance = Vector(other.x - self.x, other.y - self.y).magnitude()
+                distance = Vector(other.x - self.x, other.y - self.y).magnitude
                 if distance < self.size + other.size:
                     push_direction = Vector(other.x - self.x, other.y - self.y).normalize()
                     push_strength = (self.size + other.size - distance) / (self.size + other.size)
@@ -488,7 +470,7 @@ class Enemy:
         self.dash_cooldown = cooldown_frames
         self.dash_time = dash_frames
         dash_direction = Vector(player.x - self.x, player.y - self.y).normalize()
-        if dash_direction.magnitude() == 0:
+        if dash_direction.magnitude == 0:
             dash_direction = Vector(1, 0)
         self.dash_direction = dash_direction
 
@@ -595,7 +577,7 @@ class Enemy:
                     dir_to_player = Vector(player.x - other.x, player.y - other.y).normalize()
                     other.velocity = other.velocity.add(dir_to_player.multiply(boost_amount))
                     cap = getattr(other, "speed", 1) * 2.0
-                    if other.velocity.magnitude() > cap:
+                    if other.velocity.magnitude > cap:
                         other.velocity = other.velocity.normalize().multiply(cap)
             return True
         self.color = calm_color
@@ -604,7 +586,7 @@ class Enemy:
 
     def ability_laser_start(self, player, min_length=170, max_length=320):
         direction = Vector(player.x - self.x, player.y - self.y).normalize()
-        if direction.magnitude() == 0:
+        if direction.magnitude == 0:
             direction = Vector(1, 0)
         self.laser_direction = direction
         self.laser_length = max(min_length, min(max_length, self.distance_to(player) + player.size))

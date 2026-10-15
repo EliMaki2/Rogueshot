@@ -1,6 +1,8 @@
 import random
 import pygame
 
+from helpers import Vector
+
 # Define drops list and exp here
 drops = []
 exp = 0
@@ -40,24 +42,6 @@ def create_edge_exp_drop(amount, screen_width, screen_height):
         x = random.randint(edge_offset, max(edge_offset, screen_width - edge_offset))
         y = max(edge_offset, screen_height - edge_offset)
     return ExpDrop(x, y, amount)
-
-class Vector:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-    def add(self, other):
-        return Vector(self.x + other.x, self.y + other.y)
-    def subtract(self, other):
-        return Vector(self.x - other.x, self.y - other.y)
-    def multiply(self, scalar):
-        return Vector(self.x * scalar, self.y * scalar)
-    def normalize(self):
-        magnitude = (self.x ** 2 + self.y ** 2) ** 0.5
-        if magnitude == 0:
-            return Vector(0, 0)
-        return Vector(self.x / magnitude, self.y / magnitude)
-    def magnitude(self):
-        return (self.x ** 2 + self.y ** 2) ** 0.5
 
 class ExpDrop:
     def __init__(self, x, y, amount, color=(255, 255, 0), size=5):
@@ -106,7 +90,7 @@ class ExpDrop:
                 self.color = (255, 255, 0)
         for other in drops:
             if other != self and isinstance(other, ExpDrop) and not (self.persistent or other.persistent):
-                distance = Vector(other.x - self.x, other.y - self.y).magnitude()
+                distance = Vector(other.x - self.x, other.y - self.y).magnitude
                 if distance < 5 + self.size + other.size:
                     if self.amount == other.amount:
                         self.amount += other.amount
@@ -114,7 +98,7 @@ class ExpDrop:
                         self.amount = round(self.amount)
                         self.age = 0
                         drops.remove(other)
-        if self.movement.magnitude() > 0.2:
+        if self.movement.magnitude > 0.2:
             self.x += self.movement.x
             self.y += self.movement.y
             self.movement.x += random.randint(-20, 20)/100
@@ -147,7 +131,7 @@ class HealthDrop:
         pygame.draw.rect(screen, (0, 255, 0), (self.x - self.amount*2, self.y - self.amount*2, self.amount*4, self.amount*4))
     
     def move(self):
-        if self.movement.magnitude() > 0.1:
+        if self.movement.magnitude > 0.1:
             self.x += self.movement.x
             self.y += self.movement.y
             self.movement.x += random.randint(-20, 20)/100
@@ -175,7 +159,7 @@ class MagnetDrop:
         self.drop_friction = 1
     
     def move(self):
-        if self.movement.magnitude() > 0.1:
+        if self.movement.magnitude > 0.1:
             self.x += self.movement.x
             self.y += self.movement.y
             self.movement.x += random.randint(-20, 20)/100

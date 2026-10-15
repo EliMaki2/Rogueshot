@@ -1,5 +1,6 @@
 import random
 import pygame
+from helpers import Vector
 
 MAX_PARTICLES = 1200
 SOFT_PARTICLE_CAP = 800
@@ -18,24 +19,6 @@ class ParticleList(list):
 
 
 particles = ParticleList()
-
-class Vector:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-    def add(self, other):
-        return Vector(self.x + other.x, self.y + other.y)
-    def subtract(self, other):
-        return Vector(self.x - other.x, self.y - other.y)
-    def multiply(self, scalar):
-        return Vector(self.x * scalar, self.y * scalar)
-    def normalize(self):
-        magnitude = (self.x ** 2 + self.y ** 2) ** 0.5
-        if magnitude == 0:
-            return Vector(0, 0)
-        return Vector(self.x / magnitude, self.y / magnitude)
-    def magnitude(self):
-        return (self.x ** 2 + self.y ** 2) ** 0.5
 
 class HitParticle:
     def __init__(self, x, y, size, color):
