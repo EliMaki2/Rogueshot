@@ -1,0 +1,192 @@
+{
+  "name": "tutorial_dasher",
+  "player_start": [
+    113,
+    303
+  ],
+  "enemy_spawning": {
+    "mode": "default"
+  },
+  "walls": [
+    [
+      [
+        221,
+        195
+      ],
+      [
+        252,
+        195
+      ],
+      [
+        252,
+        418
+      ],
+      [
+        221,
+        418
+      ]
+    ]
+  ],
+  "goals": [
+    {
+      "x": 116,
+      "y": 569,
+      "walls": [],
+      "zones": [],
+      "ends_tutorial": true,
+      "radius": 34
+    }
+  ],
+  "enemy_markers": [
+    {
+      "x": 773,
+      "y": 133,
+      "walls": [],
+      "zones": [],
+      "ends_tutorial": false,
+      "enemy": "Dasher"
+    },
+    {
+      "x": 897,
+      "y": 270,
+      "walls": [],
+      "zones": [],
+      "ends_tutorial": false,
+      "enemy": "Dasher"
+    },
+    {
+      "x": 788,
+      "y": 386,
+      "walls": [],
+      "zones": [],
+      "ends_tutorial": false,
+      "enemy": "Dasher"
+    }
+  ],
+  "tutorial": {
+    "active": true,
+    "outer_wall_exp": true,
+    "waves": [],
+    "levels": [],
+    "name": "Enemy: Dasher",
+    "description": "Learn the movement of the fastest enemy, the Dasher.",
+    "body": "Dasher",
+    "gun": "Shotgun",
+    "health": 10,
+    "icon": [
+      "3333333333333333",
+      "3333333333333333",
+      "3333333333333333",
+      "3333333333333333",
+      "3333333883333333",
+      "3333388888833333",
+      "3333388888833333",
+      "3333888888883333",
+      "3333888888883333",
+      "3333388888833333",
+      "3333388888833333",
+      "3333333883333333",
+      "3333333333333333",
+      "3333333333333333",
+      "3333333333333333",
+      "3333333333333333"
+    ]
+  },
+  "editor_objects": [
+    {
+      "id": 3,
+      "type": "text",
+      "targets": [],
+      "x": 108,
+      "y": 121,
+      "text": "Spawn Enemies",
+      "size": 28
+    },
+    {
+      "id": 2,
+      "type": "trig_attack",
+      "targets": [
+        7,
+        8,
+        9
+      ],
+      "x": 107,
+      "y": 60,
+      "r": 41.19465984809196,
+      "mode": "pulse",
+      "pulse_ticks": 50,
+      "fulfilled": false,
+      "count": 1
+    },
+    {
+      "id": 4,
+      "type": "trig_move",
+      "targets": [
+        6
+      ],
+      "x": 116,
+      "y": 569,
+      "r": 34.058772731852805,
+      "mode": "latch",
+      "pulse_ticks": 30,
+      "fulfilled": false
+    },
+    {
+      "id": 5,
+      "type": "text",
+      "targets": [],
+      "x": 114,
+      "y": 516,
+      "text": "End",
+      "size": 28
+    },
+    {
+      "id": 6,
+      "type": "level_end",
+      "targets": [],
+      "x": 217,
+      "y": 566,
+      "r": 30,
+      "delay_ticks": 50
+    },
+    {
+      "id": 7,
+      "type": "spawn_point",
+      "targets": [],
+      "x": 773,
+      "y": 133,
+      "enemy": "Dasher",
+      "mode": "latch",
+      "pulse_ticks": 30
+    },
+    {
+      "id": 8,
+      "type": "spawn_point",
+      "targets": [],
+      "x": 897,
+      "y": 270,
+      "enemy": "Dasher",
+      "mode": "latch",
+      "pulse_ticks": 30
+    },
+    {
+      "id": 9,
+      "type": "spawn_point",
+      "targets": [],
+      "x": 788,
+      "y": 386,
+      "enemy": "Dasher",
+      "mode": "latch",
+      "pulse_ticks": 30
+    },
+    {
+      "id": 1,
+      "type": "wall_rect",
+      "targets": [],
+      "x1": 221,
+      "y1": 195,
+      "x2": 252,
+      "y2": 418
+    }
+  ]
+}

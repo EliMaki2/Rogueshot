@@ -1,0 +1,239 @@
+{
+  "name": "tutorial_chaser",
+  "player_start": [
+    136,
+    289
+  ],
+  "enemy_spawning": {
+    "mode": "default"
+  },
+  "walls": [
+    [
+      [
+        252,
+        190
+      ],
+      [
+        289,
+        190
+      ],
+      [
+        289,
+        444
+      ],
+      [
+        252,
+        444
+      ]
+    ]
+  ],
+  "goals": [
+    {
+      "x": 140,
+      "y": 567,
+      "walls": [],
+      "zones": [],
+      "ends_tutorial": true,
+      "radius": 35
+    }
+  ],
+  "enemy_markers": [
+    {
+      "x": 780,
+      "y": 115,
+      "walls": [],
+      "zones": [],
+      "ends_tutorial": false,
+      "enemy": "Chaser"
+    },
+    {
+      "x": 839,
+      "y": 191,
+      "walls": [],
+      "zones": [],
+      "ends_tutorial": false,
+      "enemy": "Chaser"
+    },
+    {
+      "x": 886,
+      "y": 287,
+      "walls": [],
+      "zones": [],
+      "ends_tutorial": false,
+      "enemy": "Chaser"
+    },
+    {
+      "x": 853,
+      "y": 392,
+      "walls": [],
+      "zones": [],
+      "ends_tutorial": false,
+      "enemy": "Chaser"
+    },
+    {
+      "x": 791,
+      "y": 489,
+      "walls": [],
+      "zones": [],
+      "ends_tutorial": false,
+      "enemy": "Chaser"
+    }
+  ],
+  "tutorial": {
+    "active": true,
+    "outer_wall_exp": true,
+    "levels": [],
+    "waves": [],
+    "icon": [
+      "3333333333333333",
+      "3333333333333333",
+      "3333333333333333",
+      "3333333333333333",
+      "3333333333333333",
+      "3333333443333333",
+      "3333334444333333",
+      "3333344444433333",
+      "3333344444433333",
+      "3333334444333333",
+      "3333333443333333",
+      "3333333333333333",
+      "3333333333333333",
+      "3333333333333333",
+      "3333333333333333",
+      "3333333333333333"
+    ],
+    "name": "Enemy: Chaser",
+    "description": "Learn the movement of the most common enemy, chasers",
+    "body": "Dasher",
+    "gun": "Shotgun",
+    "health": 10
+  },
+  "editor_objects": [
+    {
+      "id": 2,
+      "type": "trig_attack",
+      "targets": [
+        7,
+        9,
+        10,
+        12,
+        13
+      ],
+      "x": 139,
+      "y": 54,
+      "r": 37.12142238654117,
+      "mode": "pulse",
+      "pulse_ticks": 30,
+      "fulfilled": false,
+      "count": 1
+    },
+    {
+      "id": 3,
+      "type": "text",
+      "targets": [],
+      "x": 137,
+      "y": 104,
+      "text": "Spawn Enemies",
+      "size": 28
+    },
+    {
+      "id": 5,
+      "type": "text",
+      "targets": [],
+      "x": 143,
+      "y": 518,
+      "text": "End",
+      "size": 28
+    },
+    {
+      "id": 8,
+      "type": "text",
+      "targets": [],
+      "x": 513,
+      "y": 38,
+      "text": "Chasers: The most common enemy",
+      "size": 28
+    },
+    {
+      "id": 7,
+      "type": "spawn_point",
+      "targets": [],
+      "x": 780,
+      "y": 115,
+      "enemy": "Chaser",
+      "mode": "pulse",
+      "pulse_ticks": 100
+    },
+    {
+      "id": 4,
+      "type": "trig_move",
+      "targets": [
+        6
+      ],
+      "x": 140,
+      "y": 567,
+      "r": 35.12833614050059,
+      "mode": "latch",
+      "pulse_ticks": 30,
+      "fulfilled": false
+    },
+    {
+      "id": 6,
+      "type": "level_end",
+      "targets": [],
+      "x": 231,
+      "y": 565,
+      "r": 30,
+      "delay_ticks": 50
+    },
+    {
+      "id": 13,
+      "type": "spawn_point",
+      "targets": [],
+      "x": 839,
+      "y": 191,
+      "enemy": "Chaser",
+      "mode": "pulse",
+      "pulse_ticks": 100
+    },
+    {
+      "id": 9,
+      "type": "spawn_point",
+      "targets": [],
+      "x": 886,
+      "y": 287,
+      "enemy": "Chaser",
+      "mode": "pulse",
+      "pulse_ticks": 100
+    },
+    {
+      "id": 12,
+      "type": "spawn_point",
+      "targets": [],
+      "x": 853,
+      "y": 392,
+      "enemy": "Chaser",
+      "mode": "pulse",
+      "pulse_ticks": 100
+    },
+    {
+      "id": 10,
+      "type": "spawn_point",
+      "targets": [],
+      "x": 791,
+      "y": 489,
+      "enemy": "Chaser",
+      "mode": "pulse",
+      "pulse_ticks": 100
+    },
+    {
+      "id": 1,
+      "type": "wall_rect",
+      "targets": [],
+      "x1": 252,
+      "y1": 190,
+      "x2": 289,
+      "y2": 444
+    }
+  ]
+}
