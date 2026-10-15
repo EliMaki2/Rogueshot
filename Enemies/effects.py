@@ -2,6 +2,7 @@ import pygame
 import random
 from helpers import RGB_Color
 
+
 effects = []
 
 class Effect:

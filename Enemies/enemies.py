@@ -11,7 +11,16 @@ from Background import walls as walls_mod
 import Enemies.effects as effects_mod
 
 enemies = []
-HAUNTING_ENEMY_NAMES = ("Chaser", "Dasher", "Blaster", "Ghost", "Spiker", "Guardian", "Warper", "Turret")
+HAUNTING_ENEMY_NAMES = (
+    "Chaser",
+    "Dasher",
+    "Blaster",
+    "Ghost",
+    "Spiker",
+    "Guardian",
+    "Warper",
+    "Turret",
+)
 haunting_options = {enemy_name: False for enemy_name in HAUNTING_ENEMY_NAMES}
 
 
@@ -38,7 +47,9 @@ def _has_haunted_enemy_of_same_type(enemy):
 def apply_haunting(enemy):
     enemy_name = enemy.__class__.__name__
 
-    enemy.haunted = bool(haunting_options.get(enemy_name, False)) and not _has_haunted_enemy_of_same_type(enemy)
+    enemy.haunted = bool(
+        haunting_options.get(enemy_name, False)
+    ) and not _has_haunted_enemy_of_same_type(enemy)
     if enemy.haunted:
         enemy.speed *= 0.75
         enemy.color = tuple(min(255, channel + 35) for channel in enemy.color)
@@ -53,7 +64,9 @@ def _distance_to_segment(point_x, point_y, start_x, start_y, end_x, end_y):
     if length_squared == 0:
         return Vector(point_x - start_x, point_y - start_y).magnitude
 
-    projection = ((point_x - start_x) * segment_x + (point_y - start_y) * segment_y) / length_squared
+    projection = (
+        (point_x - start_x) * segment_x + (point_y - start_y) * segment_y
+    ) / length_squared
     projection = max(0, min(1, projection))
     closest_x = start_x + segment_x * projection
     closest_y = start_y + segment_y * projection
@@ -67,12 +80,19 @@ def _spawn_laser_particles(start_x, start_y, direction, length, color, count=6, 
         particle_x = start_x + direction.x * length * progress + random.uniform(-2, 2)
         particle_y = start_y + direction.y * length * progress + random.uniform(-2, 2)
         effect = particles_mod.HitParticle(particle_x, particle_y, size, color)
-        effect.direction = Vector(random.uniform(-0.15, 0.15), random.uniform(-0.15, 0.15))
+        effect.direction = Vector(
+            random.uniform(-0.15, 0.15), random.uniform(-0.15, 0.15)
+        )
         particles.append(effect)
+
 
 def _split_enemy(enemy, size_ratio=0.6, min_size=8):
     """Replace an enemy with two smaller copies, each with half the health."""
-    if enemy not in enemies or isinstance(enemy, Spiker) or getattr(enemy, "haunted", False):
+    if (
+        enemy not in enemies
+        or isinstance(enemy, Spiker)
+        or getattr(enemy, "haunted", False)
+    ):
         return
     if enemy.size < min_size:
         return
@@ -84,9 +104,12 @@ def _split_enemy(enemy, size_ratio=0.6, min_size=8):
         effects_mod = particles_mod.HitParticle(
             enemy.x + random.uniform(-10, 10),
             enemy.y + random.uniform(-10, 10),
-            4, (255, 240, 120),
+            4,
+            (255, 240, 120),
         )
-        effects_mod.direction = Vector(random.uniform(-1, 1), random.uniform(-1, 1)).normalize().multiply(2)
+        effects_mod.direction = (
+            Vector(random.uniform(-1, 1), random.uniform(-1, 1)).normalize().multiply(2)
+        )
         particles.append(effects_mod)
     enemies.remove(enemy)
     for i in range(2):
@@ -110,7 +133,9 @@ def _split_enemy(enemy, size_ratio=0.6, min_size=8):
 
 
 class Enemy:
-    def __init__(self, x, y, size=20, color=(255, 40, 40), health=10, damage=1, speed=1):
+    def __init__(
+        self, x, y, size=20, color=(255, 40, 40), health=10, damage=1, speed=1
+    ):
         self.x = x
         self.y = y
         self.size = size
@@ -175,7 +200,8 @@ class Enemy:
                     effect = particles_mod.HitParticle(
                         bullet.x + random.randint(-4, 4),
                         bullet.y + random.randint(-4, 4),
-                        4, (200, 210, 255),
+                        4,
+                        (200, 210, 255),
                     )
                     particles.append(effect)
                 return
@@ -202,7 +228,7 @@ class Enemy:
                         bullet.x + random.randint(-5, 5),
                         bullet.y + random.randint(-5, 5),
                         self.size / 3,
-                        bullet.color
+                        bullet.color,
                     )
                     if bullet.pierce <= 1:
                         effect.direction = bullet.velocity.multiply(-0.2)
@@ -219,14 +245,19 @@ class Enemy:
                 self.y += bullet.velocity.y * bullet.knockback / 3
                 particle_count = min(10, max(2, int(bullet.damage * 2)))
                 for i in range(particle_count):
-                    effect = particles_mod.HitParticle(bullet.x+random.randint(-5, 5), bullet.y+random.randint(-5, 5), self.size/4, (100, 200, 250))
+                    effect = particles_mod.HitParticle(
+                        bullet.x + random.randint(-5, 5),
+                        bullet.y + random.randint(-5, 5),
+                        self.size / 4,
+                        (100, 200, 250),
+                    )
                     if bullet.pierce <= 1:
                         effect.direction = bullet.velocity.multiply(-0.05)
                     else:
                         effect.direction = bullet.velocity.multiply(0.1)
                     particles.append(effect)
-    
-    def die(self, multiplier=.7):
+
+    def die(self, multiplier=0.7):
         global exp
         # Track achievement: record enemy kill
         enemy_type = self.__class__.__name__.lower()
@@ -235,7 +266,7 @@ class Enemy:
             enemy_type = "leaper"
 
         run_stats.record_enemy_kill(enemy_type)
-        
+
         if self in enemies:
             enemies.remove(self)
         if random.random() < 0.01:
@@ -270,7 +301,9 @@ class Enemy:
                     drop_amount = 1
                     size = 3
                     color = (255, 255, 0)
-                drops.append(drops_mod.ExpDrop(self.x, self.y, drop_amount, color, size))
+                drops.append(
+                    drops_mod.ExpDrop(self.x, self.y, drop_amount, color, size)
+                )
                 dropped_exp -= drop_amount
 
     def distance_to(self, target):
@@ -330,7 +363,12 @@ class Enemy:
             return (first - second + math.pi) % (2 * math.pi) - math.pi
 
         direct_distance = self.ray_distance(
-            self.x, self.y, math.cos(player_angle), math.sin(player_angle), sight, self.size
+            self.x,
+            self.y,
+            math.cos(player_angle),
+            math.sin(player_angle),
+            sight,
+            self.size,
         )
         if direct_distance is None:
             diff = (player_angle - self.heading + math.pi) % (2 * math.pi) - math.pi
@@ -361,9 +399,11 @@ class Enemy:
                 diff = angle_difference(best_angle, self.heading)
                 self.heading += max(-turn_rate, min(turn_rate, diff))
                 if abs(angle_difference(best_angle, player_angle)) > math.radians(7.5):
-                    self.avoid_side = 1 if angle_difference(best_angle, player_angle) > 0 else -1
+                    self.avoid_side = (
+                        1 if angle_difference(best_angle, player_angle) > 0 else -1
+                    )
         return Vector(math.cos(self.heading), math.sin(self.heading))
-    
+
     def hit(self, player):
         if self.distance_to(player) < self.size + player.size:
             direction = Vector(player.x - self.x, player.y - self.y).normalize()
@@ -372,9 +412,13 @@ class Enemy:
             if self.velocity.magnitude != 0:
                 self.velocity = self.velocity.multiply(-2)
             else:
-                self.velocity = Vector(random.uniform(-1, 1), random.uniform(-1, 1)).normalize().multiply(-2)
+                self.velocity = (
+                    Vector(random.uniform(-1, 1), random.uniform(-1, 1))
+                    .normalize()
+                    .multiply(-2)
+                )
             self.harm_frames = 120
-    
+
     def move(self, friction=0.9):
         if self.haunted:
             self.health = self.maxHealth
@@ -390,17 +434,25 @@ class Enemy:
         self.x += self.velocity.x
         self.y += self.velocity.y
         self.velocity = self.velocity.multiply(friction)  # Friction
-    
+
     def collide(self):
         for other in enemies:
             if other != self:
                 distance = Vector(other.x - self.x, other.y - self.y).magnitude
                 if distance < self.size + other.size:
-                    push_direction = Vector(other.x - self.x, other.y - self.y).normalize()
-                    push_strength = (self.size + other.size - distance) / (self.size + other.size)
-                    self.velocity = self.velocity.subtract(push_direction.multiply(push_strength ))
-                    other.velocity = other.velocity.add(push_direction.multiply(push_strength ))
-    
+                    push_direction = Vector(
+                        other.x - self.x, other.y - self.y
+                    ).normalize()
+                    push_strength = (self.size + other.size - distance) / (
+                        self.size + other.size
+                    )
+                    self.velocity = self.velocity.subtract(
+                        push_direction.multiply(push_strength)
+                    )
+                    other.velocity = other.velocity.add(
+                        push_direction.multiply(push_strength)
+                    )
+
     def draw(self, screen):
         red_mod = 0
         green_mod = 0
@@ -424,9 +476,13 @@ class Enemy:
             max(0, min(255, int(round(green + green_mod)))),
             max(0, min(255, int(round(blue + blue_mod)))),
         )
-        pygame.draw.circle(screen, self.drawing_color, (int(self.x), int(self.y)), self.size)
+        pygame.draw.circle(
+            screen, self.drawing_color, (int(self.x), int(self.y)), self.size
+        )
         if self.haunted:
-            pygame.draw.circle(screen, (120, 255, 120), (int(self.x), int(self.y)), self.size + 4, 2)
+            pygame.draw.circle(
+                screen, (120, 255, 120), (int(self.x), int(self.y)), self.size + 4, 2
+            )
 
         if not self.haunted:
             # Draw a red health bar centered above the enemy.
@@ -437,12 +493,26 @@ class Enemy:
                 health_ratio = max(0, min(1, self.health / self.maxHealth))
             bar_x = int(self.x - bar_width / 2)
             bar_y = int(self.y - self.size - bar_height - 6)
-            pygame.draw.rect(screen, (60, 0, 0), (bar_x, bar_y, int(bar_width), bar_height))
-            pygame.draw.rect(screen, (220, 30, 30), (bar_x, bar_y, int(bar_width * health_ratio), bar_height))
-            pygame.draw.rect(screen, (0, 0, 0), (bar_x, bar_y, int(bar_width), bar_height), 1)
+            pygame.draw.rect(
+                screen, (60, 0, 0), (bar_x, bar_y, int(bar_width), bar_height)
+            )
+            pygame.draw.rect(
+                screen,
+                (220, 30, 30),
+                (bar_x, bar_y, int(bar_width * health_ratio), bar_height),
+            )
+            pygame.draw.rect(
+                screen, (0, 0, 0), (bar_x, bar_y, int(bar_width), bar_height), 1
+            )
 
         if self.harm_frames > 0:
-            pygame.draw.circle(screen, (255, 255, 255), (int(self.x), int(self.y)), self.size + self.harm_frames/3, 2)
+            pygame.draw.circle(
+                screen,
+                (255, 255, 255),
+                (int(self.x), int(self.y)),
+                self.size + self.harm_frames / 3,
+                2,
+            )
             self.harm_frames -= 1
 
     def dash(self, direction, strength):
@@ -490,11 +560,21 @@ class Enemy:
             )
             particles.append(effect)
 
-    def ability_dash_active_step(self, dash_speed=5, trail_count=3, trail_size=None, trail_color=None, throw_force=9, throw_radius=None):
+    def ability_dash_active_step(
+        self,
+        dash_speed=5,
+        trail_count=3,
+        trail_size=None,
+        trail_color=None,
+        throw_force=9,
+        throw_radius=None,
+    ):
         if self.dash_time <= 0:
             return False
         effect_size = self.size / 4 if trail_size is None else trail_size
-        self.ability_emit_hit_particles(trail_count, effect_size, self.color if trail_color is None else trail_color)
+        self.ability_emit_hit_particles(
+            trail_count, effect_size, self.color if trail_color is None else trail_color
+        )
         dash_direction = getattr(self, "dash_direction", Vector(1, 0))
         self.velocity = dash_direction.multiply(dash_speed)
         self.x += self.velocity.x
@@ -505,11 +585,19 @@ class Enemy:
             if other is self:
                 continue
             if self.distance_to(other) < throw_r + other.size:
-                other.velocity = other.velocity.add(dash_direction.multiply(throw_force))
+                other.velocity = other.velocity.add(
+                    dash_direction.multiply(throw_force)
+                )
         self.dash_time -= 1
         return True
 
-    def ability_dash_cooldown_step(self, warning_threshold=10, warning_count=6, warning_size=None, warning_color=(200, 150, 0)):
+    def ability_dash_cooldown_step(
+        self,
+        warning_threshold=10,
+        warning_count=6,
+        warning_size=None,
+        warning_color=(200, 150, 0),
+    ):
         if self.dash_cooldown <= 0:
             return
         self.dash_cooldown -= 1
@@ -526,24 +614,46 @@ class Enemy:
         if self.distance_to(player) < trigger_distance and self.blast_time == -1:
             self.blast_time = 0
 
-    def ability_self_blast_damage(self, self_damage_multiplier=2, secret_progress_key=None):
+    def ability_self_blast_damage(
+        self, self_damage_multiplier=2, secret_progress_key=None
+    ):
         if self.haunted:
             return
         was_alive = self.health > 0
         self.health -= self.damage * self_damage_multiplier
-        if was_alive and self.health <= 0 and secret_progress_key and not getattr(self, "self_blast_death_recorded", False):
+        if (
+            was_alive
+            and self.health <= 0
+            and secret_progress_key
+            and not getattr(self, "self_blast_death_recorded", False)
+        ):
             run_stats.record_secret_progress(secret_progress_key, 1)
             self.self_blast_death_recorded = True
 
-    def ability_blast_tick(self, player, max_blast_time=60, radius_multiplier=2, pulse_color=(200, 100, 250), heal_radius=120, heal_per_tick=0.4):
+    def ability_blast_tick(
+        self,
+        player,
+        max_blast_time=60,
+        radius_multiplier=2,
+        pulse_color=(200, 100, 250),
+        heal_radius=120,
+        heal_per_tick=0.4,
+    ):
         if self.blast_time == -1:
             return
         if self.blast_time % 2 == 0:
-            effect = particles_mod.HitParticle(self.x, self.y, self.blast_time / 2, pulse_color)
+            effect = particles_mod.HitParticle(
+                self.x, self.y, self.blast_time / 2, pulse_color
+            )
             particles.append(effect)
-        if self.distance_to(player) < self.blast_time * radius_multiplier + self.size + player.size:
+        if (
+            self.distance_to(player)
+            < self.blast_time * radius_multiplier + self.size + player.size
+        ):
             player.hurt(self)
-            self.ability_self_blast_damage(secret_progress_key="blaster_self_destructions")
+            self.ability_self_blast_damage(
+                secret_progress_key="blaster_self_destructions"
+            )
         # Heal nearby enemies with the blast energy
         if self.blast_time % 6 == 0:
             for other in enemies:
@@ -554,13 +664,16 @@ class Enemy:
                     effect = particles_mod.HitParticle(
                         other.x + random.uniform(-other.size * 0.5, other.size * 0.5),
                         other.y + random.uniform(-other.size * 0.5, other.size * 0.5),
-                        3, (100, 255, 150),
+                        3,
+                        (100, 255, 150),
                     )
                     effect.direction = Vector(0, -1).multiply(1.5)
                     particles.append(effect)
         if self.blast_time > max_blast_time:
             self.blast_time = -1
-            self.ability_self_blast_damage(secret_progress_key="blaster_self_destructions")
+            self.ability_self_blast_damage(
+                secret_progress_key="blaster_self_destructions"
+            )
 
     def ability_blast_advance(self):
         if self.blast_time == -1:
@@ -568,7 +681,16 @@ class Enemy:
         self.blast_time += 1
         return True
 
-    def ability_apply_fear(self, player, fear_range=300, slow_multiplier=0.2, feared_color=(150, 150, 255), calm_color=(100, 100, 200), boost_range=None, boost_amount=0.25):
+    def ability_apply_fear(
+        self,
+        player,
+        fear_range=300,
+        slow_multiplier=0.2,
+        feared_color=(150, 150, 255),
+        calm_color=(100, 100, 200),
+        boost_range=None,
+        boost_amount=0.25,
+    ):
         if self.distance_to(player) < self.size + player.size + fear_range:
             self.velocity = self.velocity.multiply(slow_multiplier)
             self.color = feared_color
@@ -579,8 +701,12 @@ class Enemy:
                 if other is self:
                     continue
                 if self.distance_to(other) < nearby_range:
-                    dir_to_player = Vector(player.x - other.x, player.y - other.y).normalize()
-                    other.velocity = other.velocity.add(dir_to_player.multiply(boost_amount))
+                    dir_to_player = Vector(
+                        player.x - other.x, player.y - other.y
+                    ).normalize()
+                    other.velocity = other.velocity.add(
+                        dir_to_player.multiply(boost_amount)
+                    )
                     cap = getattr(other, "speed", 1) * 2.0
                     if other.velocity.magnitude > cap:
                         other.velocity = other.velocity.normalize().multiply(cap)
@@ -594,7 +720,9 @@ class Enemy:
         if direction.magnitude == 0:
             direction = Vector(1, 0)
         self.laser_direction = direction
-        self.laser_length = max(min_length, min(max_length, self.distance_to(player) + player.size))
+        self.laser_length = max(
+            min_length, min(max_length, self.distance_to(player) + player.size)
+        )
         self.laser_charge = 0
         self.laser_time = 0
         self.laser_damage_done = False
@@ -607,16 +735,42 @@ class Enemy:
         )
 
     def ability_laser_emit_warning(self, color=(180, 255, 200), count=5, size=2):
-        _spawn_laser_particles(self.x, self.y, self.laser_direction, self.laser_length, color, count=count, size=size)
+        _spawn_laser_particles(
+            self.x,
+            self.y,
+            self.laser_direction,
+            self.laser_length,
+            color,
+            count=count,
+            size=size,
+        )
 
     def ability_laser_emit_beam(self, color=(255, 240, 120), count=7, size=3):
-        _spawn_laser_particles(self.x, self.y, self.laser_direction, self.laser_length, color, count=count, size=size)
+        _spawn_laser_particles(
+            self.x,
+            self.y,
+            self.laser_direction,
+            self.laser_length,
+            color,
+            count=count,
+            size=size,
+        )
 
     def ability_laser_hits_player(self, player, hit_padding=12):
         end_x, end_y = self.ability_laser_end()
-        return _distance_to_segment(player.x, player.y, self.x, self.y, end_x, end_y) <= player.size + hit_padding
+        return (
+            _distance_to_segment(player.x, player.y, self.x, self.y, end_x, end_y)
+            <= player.size + hit_padding
+        )
 
-    def ability_laser_target_step(self, player, engage_distance=260, charge_frames=24, beam_frames=8, cooldown_frames=70):
+    def ability_laser_target_step(
+        self,
+        player,
+        engage_distance=260,
+        charge_frames=24,
+        beam_frames=8,
+        cooldown_frames=70,
+    ):
         if self.laser_cooldown > 0:
             self.laser_cooldown -= 1
 
@@ -660,7 +814,9 @@ class Enemy:
         self.collide()
         return True
 
-    def ability_spawn_minion_wave(self, time_scale, spawn_count=3, spread=50, cooldown_frames=120, type=None):
+    def ability_spawn_minion_wave(
+        self, time_scale, spawn_count=3, spread=50, cooldown_frames=120, type=None
+    ):
         if self.spawn_time > 0:
             self.spawn_time -= 1
             return
@@ -708,10 +864,14 @@ class Enemy:
     # ------------------------------------------------------------------ #
     #  Shield                                                              #
     # ------------------------------------------------------------------ #
-    def ability_shield_init(self, shield_radius=None, shield_width=60, shield_thickness=8, spin_speed=0.045):
+    def ability_shield_init(
+        self, shield_radius=None, shield_width=60, shield_thickness=8, spin_speed=0.045
+    ):
         """Enable a rotating rectangular shield around this enemy."""
         self.shield_active = True
-        self.shield_radius = (self.size + 14) if shield_radius is None else shield_radius
+        self.shield_radius = (
+            (self.size + 14) if shield_radius is None else shield_radius
+        )
         self.shield_width = shield_width
         self.shield_thickness = shield_thickness
         self.shield_spin_speed = spin_speed
@@ -737,7 +897,10 @@ class Enemy:
         radial_y = math.sin(self.shield_angle)
         local_x = dx * tangent_x + dy * tangent_y
         local_y = dx * radial_x + dy * radial_y
-        return abs(local_x) <= self.shield_width / 2 and abs(local_y) <= self.shield_thickness / 2
+        return (
+            abs(local_x) <= self.shield_width / 2
+            and abs(local_y) <= self.shield_thickness / 2
+        )
 
     def ability_shield_blocks_bullet(self, bullet):
         """Return True if bullet's position falls inside the shield rectangle."""
@@ -767,7 +930,14 @@ class Enemy:
     # ------------------------------------------------------------------ #
     #  Warp                                                                #
     # ------------------------------------------------------------------ #
-    def ability_warp_target_step(self, player, engage_distance=300, charge_frames=60, cooldown_frames=200, overshoot=90):
+    def ability_warp_target_step(
+        self,
+        player,
+        engage_distance=300,
+        charge_frames=60,
+        cooldown_frames=200,
+        overshoot=90,
+    ):
         """
         Charge up then teleport self (and any nearby enemies) to a point
         behind the player. Call from target(). Returns True while active.
@@ -787,30 +957,51 @@ class Enemy:
         self.warp_charge += 1
         if self.warp_charge % 4 == 0:
             progress = min(1.0, self.warp_charge / self._warp_charge_frames)
-            px = self.x + (self.warp_target_x - self.x) * progress + random.uniform(-6, 6)
-            py = self.y + (self.warp_target_y - self.y) * progress + random.uniform(-6, 6)
+            px = (
+                self.x
+                + (self.warp_target_x - self.x) * progress
+                + random.uniform(-6, 6)
+            )
+            py = (
+                self.y
+                + (self.warp_target_y - self.y) * progress
+                + random.uniform(-6, 6)
+            )
             effect = particles_mod.HitParticle(px, py, 3, (180, 100, 255))
-            effect.direction = Vector(random.uniform(-0.3, 0.3), random.uniform(-0.3, 0.3))
+            effect.direction = Vector(
+                random.uniform(-0.3, 0.3), random.uniform(-0.3, 0.3)
+            )
             particles.append(effect)
         if self.warp_charge >= self._warp_charge_frames:
             # Carry any nearby enemies along
             carried = [
-                e for e in enemies
-                if e is not self and self.distance_to(e) < self.warp_carry_radius + e.size
+                e
+                for e in enemies
+                if e is not self
+                and self.distance_to(e) < self.warp_carry_radius + e.size
             ]
             self.x = self.warp_target_x
             self.y = self.warp_target_y
             for e in carried:
-                e.x = self.warp_target_x + random.uniform(-self.size * 1.5, self.size * 1.5)
-                e.y = self.warp_target_y + random.uniform(-self.size * 1.5, self.size * 1.5)
+                e.x = self.warp_target_x + random.uniform(
+                    -self.size * 1.5, self.size * 1.5
+                )
+                e.y = self.warp_target_y + random.uniform(
+                    -self.size * 1.5, self.size * 1.5
+                )
             # Arrival burst particles
             for i in range(12):
                 effect = particles_mod.HitParticle(
                     self.x + random.uniform(-self.size, self.size),
                     self.y + random.uniform(-self.size, self.size),
-                    5, (180, 100, 255),
+                    5,
+                    (180, 100, 255),
                 )
-                effect.direction = Vector(random.uniform(-1, 1), random.uniform(-1, 1)).normalize().multiply(2.5)
+                effect.direction = (
+                    Vector(random.uniform(-1, 1), random.uniform(-1, 1))
+                    .normalize()
+                    .multiply(2.5)
+                )
                 particles.append(effect)
             self.warp_charge = -1
             self.warp_cooldown = cooldown_frames
@@ -822,28 +1013,49 @@ class Enemy:
             return
         total = getattr(self, "_warp_charge_frames", 60)
         progress = min(1.0, self.warp_charge / total)
-        color = (min(255, int(100 + 155 * progress)), min(255, int(50 + 50 * progress)), 255)
+        color = (
+            min(255, int(100 + 155 * progress)),
+            min(255, int(50 + 50 * progress)),
+            255,
+        )
         thickness = max(1, int(progress * 3))
         pygame.draw.line(
-            screen, color,
+            screen,
+            color,
             (int(self.x), int(self.y)),
             (int(self.warp_target_x), int(self.warp_target_y)),
             thickness,
         )
         marker_r = max(3, int(self.size * 0.7 * progress))
-        pygame.draw.circle(screen, color, (int(self.warp_target_x), int(self.warp_target_y)), marker_r, 2)
+        pygame.draw.circle(
+            screen,
+            color,
+            (int(self.warp_target_x), int(self.warp_target_y)),
+            marker_r,
+            2,
+        )
         # Draw the carry-range indicator around the warper
         carry_r = int(self.warp_carry_radius)
         alpha = int(60 + 140 * progress)
-        ring_color = (min(255, int(150 + 105 * progress)), min(255, int(80 + 80 * progress)), 255)
+        ring_color = (
+            min(255, int(150 + 105 * progress)),
+            min(255, int(80 + 80 * progress)),
+            255,
+        )
         # Pulsing dash pattern: alternate drawn/gap segments around the circle
         segment_count = 24
         for i in range(segment_count):
             if i % 2 == 0:
                 angle_start = math.radians(i * 360 / segment_count)
                 angle_end = math.radians((i + 1) * 360 / segment_count)
-                p1 = (int(self.x + carry_r * math.cos(angle_start)), int(self.y + carry_r * math.sin(angle_start)))
-                p2 = (int(self.x + carry_r * math.cos(angle_end)), int(self.y + carry_r * math.sin(angle_end)))
+                p1 = (
+                    int(self.x + carry_r * math.cos(angle_start)),
+                    int(self.y + carry_r * math.sin(angle_start)),
+                )
+                p2 = (
+                    int(self.x + carry_r * math.cos(angle_end)),
+                    int(self.y + carry_r * math.sin(angle_end)),
+                )
                 pygame.draw.line(screen, ring_color, p1, p2, 2)
 
     def ability_shoot(self, player):
@@ -880,8 +1092,12 @@ class Enemy:
         if self.iceshock_charge > 0:
             self.iceshock_charge -= 1
         else:
-            if (player.x - self.iceshock_point[0]) ** 2 + (player.y - self.iceshock_point[1]) ** 2 < self.iceshock_radius ** 2:
-                effects_mod.apply_effect(player, "frozen", duration=self.iceshock_length, level=1)
+            if (player.x - self.iceshock_point[0]) ** 2 + (
+                player.y - self.iceshock_point[1]
+            ) ** 2 < self.iceshock_radius**2:
+                effects_mod.apply_effect(
+                    player, "frozen", duration=self.iceshock_length, level=1
+                )
             self.iceshock_point = None
             self.iceshock_charge = 0
             self.iceshock_cooldown = self.max_iceshock_cooldown
@@ -890,9 +1106,26 @@ class Enemy:
         if self.iceshock_point is None:
             return
         progress = self.iceshock_charge / self.max_iceshock_charge
-        pygame.draw.circle(screen, (0, 50, 150), (int(self.iceshock_point[0]), int(self.iceshock_point[1])), self.iceshock_radius)
-        pygame.draw.circle(screen, (0, 150, 255), (int(self.iceshock_point[0]), int(self.iceshock_point[1])), self.iceshock_radius, 2)
-        pygame.draw.circle(screen, (100, 100, 200), (int(self.iceshock_point[0]), int(self.iceshock_point[1])), round(self.iceshock_radius * progress))
+        pygame.draw.circle(
+            screen,
+            (0, 50, 150),
+            (int(self.iceshock_point[0]), int(self.iceshock_point[1])),
+            self.iceshock_radius,
+        )
+        pygame.draw.circle(
+            screen,
+            (0, 150, 255),
+            (int(self.iceshock_point[0]), int(self.iceshock_point[1])),
+            self.iceshock_radius,
+            2,
+        )
+        pygame.draw.circle(
+            screen,
+            (100, 100, 200),
+            (int(self.iceshock_point[0]), int(self.iceshock_point[1])),
+            round(self.iceshock_radius * progress),
+        )
+
 
     def ability_heal(self):
         if self.heal_cooldown == 0:
@@ -924,7 +1157,12 @@ class Bullet:
             self.remove = True
 
     def draw(self, screen):
-        pygame.draw.circle(screen, (150, 25, 25), (int(self.x - self.direction.x * 3), int(self.y - self.direction.y * 3)), 2)
+        pygame.draw.circle(
+            screen,
+            (150, 25, 25),
+            (int(self.x - self.direction.x * 3), int(self.y - self.direction.y * 3)),
+            2,
+        )
         pygame.draw.circle(screen, (255, 50, 50), (int(self.x), int(self.y)), 3)
         pygame.draw.circle(screen, (255, 255, 255), (int(self.x), int(self.y)), 3, 1)
 
@@ -937,27 +1175,29 @@ class Bullet:
 class Chaser(Enemy):
     def __init__(self, x, y, time=1):
         health = _scaled_health(2, time)
-        damage = 1 + time/3000
-        super().__init__(x, y, size=15, color=(250, 60, 60), health=health, damage=damage, speed=1.5)
-    
+        damage = 1 + time / 3000
+        super().__init__(
+            x, y, size=15, color=(250, 60, 60), health=health, damage=damage, speed=1.5
+        )
+
     def move(self):
         super().move(friction=0.99)
         self.collide()
-    
+
     def target(self, player):
         super().target(player)
         self.hit(player)
-    
+
     def draw(self, screen):
         super().draw(screen)
 
     def hurt(self, bullet, direct_damage=False):
         super().hurt(bullet, direct_damage=direct_damage)
-    
+
     def die(self):
         # Track achievement: record enemy kill
         run_stats.record_enemy_kill("chaser")
-        
+
         if self in enemies:
             enemies.remove(self)
         if random.random() < 0.02:
@@ -966,43 +1206,43 @@ class Chaser(Enemy):
         if random.random() < 0.1:
             drop = drops_mod.HealthDrop(self.x, self.y, 1)
             drops.append(drop)
-        dropped_exp = self.maxHealth * .9
+        dropped_exp = self.maxHealth * 0.9
         while dropped_exp > 0:
-                if dropped_exp > 2:
-                    if dropped_exp > 5:
-                        if dropped_exp > 10:
-                            if dropped_exp > 30:
-                                drop_amount = 30
-                                size = 15
-                                color = (255, 100, 0)
-                            else:
-                                drop_amount = 10
-                                size = 10
-                                color = (255, 150, 0)
+            if dropped_exp > 2:
+                if dropped_exp > 5:
+                    if dropped_exp > 10:
+                        if dropped_exp > 30:
+                            drop_amount = 30
+                            size = 15
+                            color = (255, 100, 0)
                         else:
-                            drop_amount = 5
-                            size = 7
-                            color = (255, 200, 0)
+                            drop_amount = 10
+                            size = 10
+                            color = (255, 150, 0)
                     else:
-                        drop_amount = 2
-                        size = 5
-                        color = (255, 255, 0)
+                        drop_amount = 5
+                        size = 7
+                        color = (255, 200, 0)
                 else:
-                    drop_amount = 1
-                    size = 3
+                    drop_amount = 2
+                    size = 5
                     color = (255, 255, 0)
-                drops.append(drops_mod.ExpDrop(self.x, self.y, drop_amount, color, size))
-                dropped_exp -= drop_amount
+            else:
+                drop_amount = 1
+                size = 3
+                color = (255, 255, 0)
+            drops.append(drops_mod.ExpDrop(self.x, self.y, drop_amount, color, size))
+            dropped_exp -= drop_amount
 
 
 class Dasher(Enemy):
     def __init__(self, x, y, time=1):
         health = _scaled_health(3, time)
-        damage = 1 + time/3000
+        damage = 1 + time / 3000
         super().__init__(x, y, 20, (250, 200, 50), health, damage, 1)
         self.dash_cooldown = 0
         self.dash_time = 0
-    
+
     def target(self, player):
         if self.dash_cooldown == 0 and self.dash_time == 0:
             self.ability_emit_hit_particles(1, self.size / 3, (250, 150, 0))
@@ -1013,50 +1253,73 @@ class Dasher(Enemy):
         elif self.dash_time == 0:
             super().target(player)
         self.hit(player)
-    
+
     def move(self):
-        if self.ability_dash_active_step(dash_speed=5, trail_count=3, trail_size=self.size / 4, trail_color=self.color):
+        if self.ability_dash_active_step(
+            dash_speed=5,
+            trail_count=3,
+            trail_size=self.size / 4,
+            trail_color=self.color,
+        ):
             return
         super().move(friction=0.95)
         self.collide()
-        self.ability_dash_cooldown_step(warning_threshold=10, warning_count=6, warning_size=self.size / 3, warning_color=(200, 150, 0))
-    
+        self.ability_dash_cooldown_step(
+            warning_threshold=10,
+            warning_count=6,
+            warning_size=self.size / 3,
+            warning_color=(200, 150, 0),
+        )
+
     def hurt(self, bullet, direct_damage=False):
         super().hurt(bullet, direct_damage=direct_damage)
         self.ability_interrupt_dash(reset_cooldown_frames=60)
 
-    def die(self): 
+    def die(self):
         super().die(multiplier=1.2)
+
 
 class Blaster(Enemy):
     def __init__(self, x, y, time=1):
         health = _scaled_health(4, time)
-        damage = 1 + time/3000
+        damage = 1 + time / 3000
         super().__init__(x, y, 25, (150, 50, 250), health, damage, 0.5)
         self.blast_time = -1
         self.self_blast_death_recorded = False
-    
+
     def target(self, player):
         super().target(player)
         self.ability_blast_trigger(player, trigger_distance=150)
         if self.blast_time != -1:
-            self.ability_blast_tick(player, max_blast_time=60, radius_multiplier=2, pulse_color=(200, 100, 250))
+            self.ability_blast_tick(
+                player,
+                max_blast_time=60,
+                radius_multiplier=2,
+                pulse_color=(200, 100, 250),
+            )
         self.hit(player)
-    
+
     def move(self):
         if not self.ability_blast_advance():
             super().move(friction=0.9)
         self.collide()
-    
+
     def draw(self, screen):
         super().draw(screen)
         if self.blast_time != -1:
-            pygame.draw.circle(screen, (200, 100, 250), (int(self.x), int(self.y)), self.blast_time *2 + self.size, 2)
-            
+            pygame.draw.circle(
+                screen,
+                (200, 100, 250),
+                (int(self.x), int(self.y)),
+                self.blast_time * 2 + self.size,
+                2,
+            )
+
+
 class Ghost(Enemy):
     def __init__(self, x, y, time=1):
         health = _scaled_health(2, time)
-        damage = 1 + time/3000
+        damage = 1 + time / 3000
         super().__init__(x, y, 10, (100, 100, 255), health, damage, 1.5)
         self.feared = False
         self.avoids_walls = False
@@ -1066,13 +1329,19 @@ class Ghost(Enemy):
             super().hurt(bullet, direct_damage=direct_damage)
             if self.harm_frames == 0:
                 self.velocity = self.velocity.multiply(-1)
-    
+
     def move(self):
         super().move(friction=0.98)
-    
+
     def target(self, player):
         super().target(player)
-        self.ability_apply_fear(player, fear_range=300, slow_multiplier=0.2, feared_color=(150, 150, 255), calm_color=(100, 100, 200))
+        self.ability_apply_fear(
+            player,
+            fear_range=300,
+            slow_multiplier=0.2,
+            feared_color=(150, 150, 255),
+            calm_color=(100, 100, 200),
+        )
         self.hit(player)
 
 
@@ -1089,7 +1358,13 @@ class Spiker(Enemy):
         self.laser_damage_done = False
 
     def target(self, player):
-        if self.ability_laser_target_step(player, engage_distance=260, charge_frames=24, beam_frames=8, cooldown_frames=70):
+        if self.ability_laser_target_step(
+            player,
+            engage_distance=260,
+            charge_frames=24,
+            beam_frames=8,
+            cooldown_frames=70,
+        ):
             return
 
         super().target(player)
@@ -1108,68 +1383,105 @@ class Spiker(Enemy):
         super().draw(screen)
         if self.laser_charge >= 0:
             end_x, end_y = self.ability_laser_end()
-            pygame.draw.line(screen, (180, 255, 200), (int(self.x), int(self.y)), (int(end_x), int(end_y)), 4)
-            pygame.draw.circle(screen, (220, 255, 230), (int(self.x), int(self.y)), self.size + 3, 1)
+            pygame.draw.line(
+                screen,
+                (180, 255, 200),
+                (int(self.x), int(self.y)),
+                (int(end_x), int(end_y)),
+                4,
+            )
+            pygame.draw.circle(
+                screen, (220, 255, 230), (int(self.x), int(self.y)), self.size + 3, 1
+            )
         elif self.laser_time > 0:
             end_x, end_y = self.ability_laser_end()
-            pygame.draw.line(screen, (255, 120, 120), (int(self.x), int(self.y)), (int(end_x), int(end_y)), 8)
-            pygame.draw.line(screen, (255, 230, 120), (int(self.x), int(self.y)), (int(end_x), int(end_y)), 4)
-            pygame.draw.circle(screen, (255, 240, 200), (int(self.x), int(self.y)), self.size + 4, 1)
+            pygame.draw.line(
+                screen,
+                (255, 120, 120),
+                (int(self.x), int(self.y)),
+                (int(end_x), int(end_y)),
+                8,
+            )
+            pygame.draw.line(
+                screen,
+                (255, 230, 120),
+                (int(self.x), int(self.y)),
+                (int(end_x), int(end_y)),
+                4,
+            )
+            pygame.draw.circle(
+                screen, (255, 240, 200), (int(self.x), int(self.y)), self.size + 4, 1
+            )
+
 
 class Commander(Enemy):
     def __init__(self, x, y, time=1):
         health = _scaled_health(15, time)
-        damage = 1 + time/3000
+        damage = 1 + time / 3000
         super().__init__(x, y, 30, (200, 50, 50), health, damage, 1)
         self.spawn_time = 0
-        self.time = time/2
+        self.time = time / 2
         self.type = "boss"
-    
+
     def move(self):
         super().move(friction=0.9)
         self.collide()
-    
+
     def target(self, player):
         super().target(player)
         self.hit(player)
-        self.ability_spawn_minion_wave(self.time, spawn_count=3, spread=50, cooldown_frames=120)
+        self.ability_spawn_minion_wave(
+            self.time, spawn_count=3, spread=50, cooldown_frames=120
+        )
 
 
 class Guardian(Enemy):
     def __init__(self, x, y, time=1):
         health = _scaled_health(10, time)
-        damage = 1 + time/3000
+        damage = 1 + time / 3000
         super().__init__(x, y, 22, (50, 100, 250), health, damage, 0.8)
-        self.ability_shield_init(shield_radius=self.size + 14, shield_width=60, shield_thickness=8, spin_speed=0.045)
-    
+        self.ability_shield_init(
+            shield_radius=self.size + 14,
+            shield_width=60,
+            shield_thickness=8,
+            spin_speed=0.045,
+        )
+
     def target(self, player):
         super().target(player)
         self.hit(player)
-    
+
     def move(self):
         super().move(friction=0.9)
         self.collide()
         self.ability_shield_step()
-    
+
     def draw(self, screen):
         super().draw(screen)
         self.ability_shield_draw(screen)
 
+
 class Warper(Enemy):
     def __init__(self, x, y, time=1):
         health = _scaled_health(8, time)
-        damage = 1 + time/3000
+        damage = 1 + time / 3000
         super().__init__(x, y, 18, (170, 60, 255), health, damage, 0.9)
         self.warp_carry_radius = self.size * 4
         self.warp_charge = -1
         self.warp_cooldown = 0
-    
+
     def target(self, player):
-        if self.ability_warp_target_step(player, engage_distance=300, charge_frames=60, cooldown_frames=200, overshoot=90):
+        if self.ability_warp_target_step(
+            player,
+            engage_distance=300,
+            charge_frames=60,
+            cooldown_frames=200,
+            overshoot=90,
+        ):
             return
         super().target(player)
         self.hit(player)
-    
+
     def move(self):
         if self.warp_charge != -1:
             super().move(friction=0.96)
@@ -1177,18 +1489,19 @@ class Warper(Enemy):
             return
         super().move(friction=0.9)
         self.collide()
-    
+
     def draw(self, screen):
         super().draw(screen)
         self.ability_warp_draw(screen)
 
+
 class Turret(Enemy):
     def __init__(self, x, y, time=1):
         health = _scaled_health(12, time)
-        damage = 1 + time/3000
+        damage = 1 + time / 3000
         super().__init__(x, y, 20, (255, 150, 100), health, damage, 0)
         self.shoot_charge = 0
-    
+
     def target(self, player):
         super().target(player)
         self.hit(player)
@@ -1214,11 +1527,12 @@ class Turret(Enemy):
         super().draw(screen)
         self.ability_shoot_draw(screen)
 
+
 class Shatterking(Enemy):
-    #boss enemy, warps twoards player then fires lasers in a set of three. if not hit when firing, it will spawn two spikers.
+    # boss enemy, warps twoards player then fires lasers in a set of three. if not hit when firing, it will spawn two spikers.
     def __init__(self, x, y, time=1):
         health = _scaled_health(50, time)
-        damage = 3 + time/2000
+        damage = 3 + time / 2000
         super().__init__(x, y, 35, (255, 100, 170), health, damage, 0.9)
         self.warp_carry_radius = self.size * 5
         self.warp_charge = -1
@@ -1235,7 +1549,13 @@ class Shatterking(Enemy):
         self.type = "boss"
 
     def target(self, player):
-        if self.ability_warp_target_step(player, engage_distance=500, charge_frames=40, cooldown_frames=300, overshoot=30):
+        if self.ability_warp_target_step(
+            player,
+            engage_distance=500,
+            charge_frames=40,
+            cooldown_frames=300,
+            overshoot=30,
+        ):
             return
         if self.fired_lasers >= 3:
             self.fired_lasers = 0
@@ -1243,7 +1563,13 @@ class Shatterking(Enemy):
                 self.ability_spawn_minion_wave(30, 1, 60, 10, "Spiker")
             self.harmed_during_laser = False
         if self.fired_lasers < 3:
-            if self.ability_laser_target_step(player, engage_distance=360, charge_frames=36, beam_frames=12, cooldown_frames=30):
+            if self.ability_laser_target_step(
+                player,
+                engage_distance=360,
+                charge_frames=36,
+                beam_frames=12,
+                cooldown_frames=30,
+            ):
                 self.fired_lasers += 1
                 return
         super().target(player)
@@ -1269,18 +1595,41 @@ class Shatterking(Enemy):
         self.ability_warp_draw(screen)
         if self.laser_charge >= 0:
             end_x, end_y = self.ability_laser_end()
-            pygame.draw.line(screen, (180, 255, 200), (int(self.x), int(self.y)), (int(end_x), int(end_y)), 4)
-            pygame.draw.circle(screen, (220, 255, 230), (int(self.x), int(self.y)), self.size + 3, 1)
+            pygame.draw.line(
+                screen,
+                (180, 255, 200),
+                (int(self.x), int(self.y)),
+                (int(end_x), int(end_y)),
+                4,
+            )
+            pygame.draw.circle(
+                screen, (220, 255, 230), (int(self.x), int(self.y)), self.size + 3, 1
+            )
         elif self.laser_time > 0:
             end_x, end_y = self.ability_laser_end()
-            pygame.draw.line(screen, (255, 120, 120), (int(self.x), int(self.y)), (int(end_x), int(end_y)), 8)
-            pygame.draw.line(screen, (255, 230, 120), (int(self.x), int(self.y)), (int(end_x), int(end_y)), 4)
-            pygame.draw.circle(screen, (255, 240, 200), (int(self.x), int(self.y)), self.size + 4, 1)
+            pygame.draw.line(
+                screen,
+                (255, 120, 120),
+                (int(self.x), int(self.y)),
+                (int(end_x), int(end_y)),
+                8,
+            )
+            pygame.draw.line(
+                screen,
+                (255, 230, 120),
+                (int(self.x), int(self.y)),
+                (int(end_x), int(end_y)),
+                4,
+            )
+            pygame.draw.circle(
+                screen, (255, 240, 200), (int(self.x), int(self.y)), self.size + 4, 1
+            )
+
 
 class Freezer(Enemy):
     def __init__(self, x, y, time):
         health = _scaled_health(20, time)
-        damage = 1 + time/3000
+        damage = 1 + time / 3000
         super().__init__(x, y, 15, (100, 150, 255), health, damage, 0.9)
         self.iceshock_radius = 40
         self.iceshock_length = 60
@@ -1309,18 +1658,14 @@ class Freezer(Enemy):
         super().draw(screen)
         if self.iceshock_charge != 0:
             end_x, end_y = self.iceshock_point
-            pygame.draw.line(screen, (100, 100, 200), (int(self.x), int(self.y)), (int(end_x), int(end_y)), 4)
-            pygame.draw.circle(screen, (150, 220, 255), (int(self.x), int(self.y)), self.size + 3, 1)
+            pygame.draw.line(
+                screen,
+                (100, 100, 200),
+                (int(self.x), int(self.y)),
+                (int(end_x), int(end_y)),
+                4,
+            )
+            pygame.draw.circle(
+                screen, (150, 220, 255), (int(self.x), int(self.y)), self.size + 3, 1
+            )
             self.ability_iceshock_draw(screen)
-
-
-class Medic(Enemy):
-    def __init__(self, x, y, time):
-        health = _scaled_health(15, time)
-        damage = 1 + time/3000
-        super().__init__(x, y, 20, (150, 255, 150), health, damage, 0.9)
-        self.heal_radius = 40
-        self.heal_charge = 0
-        self.heal_cooldown = 0
-        self.max_heal_cooldown = 300
-        self.max_heal_charge = 60

@@ -14,8 +14,12 @@ class Wall:
 
     def to_dict(self):
         return {
-            "x": self.x, "y": self.y, "width": self.width, "height": self.height,
-            "enabled": self.enabled, "goal_linked": self.goal_linked,
+            "x": self.x,
+            "y": self.y,
+            "width": self.width,
+            "height": self.height,
+            "enabled": self.enabled,
+            "goal_linked": self.goal_linked,
         }
 
     def contains_point(self, px, py, padding=0):
@@ -32,7 +36,12 @@ class Wall:
         top, bottom = self.y - padding, self.y + self.height + padding
         dx, dy = x2 - x1, y2 - y1
         t0, t1 = 0.0, 1.0
-        for p, q in ((-dx, x1 - left), (dx, right - x1), (-dy, y1 - top), (dy, bottom - y1)):
+        for p, q in (
+            (-dx, x1 - left),
+            (dx, right - x1),
+            (-dy, y1 - top),
+            (dy, bottom - y1),
+        ):
             if p == 0:
                 if q < 0:
                     return False
@@ -60,7 +69,7 @@ class Wall:
         if dist_sq >= radius * radius:
             return
         if dist_sq > 0:
-            dist = dist_sq ** 0.5
+            dist = dist_sq**0.5
             entity.x = nearest_x + dx / dist * radius
             entity.y = nearest_y + dy / dist * radius
             return
@@ -87,7 +96,11 @@ class Wall:
 def _closest_on_segment(px, py, ax, ay, bx, by):
     dx, dy = bx - ax, by - ay
     length_sq = dx * dx + dy * dy
-    t = 0.0 if length_sq == 0 else max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / length_sq))
+    t = (
+        0.0
+        if length_sq == 0
+        else max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / length_sq))
+    )
     return ax + dx * t, ay + dy * t
 
 
@@ -95,7 +108,10 @@ def _segments_cross(p1, p2, p3, p4):
     def side(a, b, c):
         return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
 
-    return side(p1, p2, p3) * side(p1, p2, p4) < 0 and side(p3, p4, p1) * side(p3, p4, p2) < 0
+    return (
+        side(p1, p2, p3) * side(p1, p2, p4) < 0
+        and side(p3, p4, p1) * side(p3, p4, p2) < 0
+    )
 
 
 class CircleWall:
@@ -123,11 +139,21 @@ class CircleWall:
         return self.radius * 2
 
     def to_dict(self):
-        return {"kind": "circle", "cx": self.cx, "cy": self.cy, "radius": self.radius,
-                "enabled": self.enabled, "goal_linked": self.goal_linked}
+        return {
+            "kind": "circle",
+            "cx": self.cx,
+            "cy": self.cy,
+            "radius": self.radius,
+            "enabled": self.enabled,
+            "goal_linked": self.goal_linked,
+        }
 
     def contains_point(self, px, py, padding=0):
-        return self.enabled and (px - self.cx) ** 2 + (py - self.cy) ** 2 <= (self.radius + padding) ** 2
+        return (
+            self.enabled
+            and (px - self.cx) ** 2 + (py - self.cy) ** 2
+            <= (self.radius + padding) ** 2
+        )
 
     def intersects_segment(self, x1, y1, x2, y2, padding=0):
         if not self.enabled:
@@ -146,7 +172,7 @@ class CircleWall:
         if dist_sq == 0:
             dx, dy, dist = 1.0, 0.0, 1.0
         else:
-            dist = dist_sq ** 0.5
+            dist = dist_sq**0.5
         entity.x = self.cx + dx / dist * reach
         entity.y = self.cy + dy / dist * reach
 
@@ -184,8 +210,12 @@ class TriangleWall:
         return max(p[1] for p in self.points) - self.y
 
     def to_dict(self):
-        return {"kind": "triangle", "points": [list(p) for p in self.points],
-                "enabled": self.enabled, "goal_linked": self.goal_linked}
+        return {
+            "kind": "triangle",
+            "points": [list(p) for p in self.points],
+            "enabled": self.enabled,
+            "goal_linked": self.goal_linked,
+        }
 
     def _edges(self):
         a, b, c = self.points
@@ -218,7 +248,7 @@ class TriangleWall:
             return False
         if self.contains_point(x1, y1, padding) or self.contains_point(x2, y2, padding):
             return True
-        for (a, b) in self._edges():
+        for a, b in self._edges():
             if _segments_cross((x1, y1), (x2, y2), a, b):
                 return True
             if padding > 0:
@@ -240,7 +270,7 @@ class TriangleWall:
         inside = self._inside(entity.x, entity.y)
         if not inside and dist_sq >= radius * radius:
             return
-        dist = dist_sq ** 0.5
+        dist = dist_sq**0.5
         if dist == 0:
             # Centre lies on an edge; leave away from the triangle's centroid.
             cx = sum(p[0] for p in self.points) / 3
@@ -272,9 +302,19 @@ def create_plus_walls(center_x, center_y, arm_length=140, thickness=30, gap=60):
     """Four rectangular walls forming a plus with an open centre of `gap` size."""
     half_gap = gap / 2
     return [
-        Wall(center_x - thickness / 2, center_y - half_gap - arm_length, thickness, arm_length),
+        Wall(
+            center_x - thickness / 2,
+            center_y - half_gap - arm_length,
+            thickness,
+            arm_length,
+        ),
         Wall(center_x - thickness / 2, center_y + half_gap, thickness, arm_length),
-        Wall(center_x - half_gap - arm_length, center_y - thickness / 2, arm_length, thickness),
+        Wall(
+            center_x - half_gap - arm_length,
+            center_y - thickness / 2,
+            arm_length,
+            thickness,
+        ),
         Wall(center_x + half_gap, center_y - thickness / 2, arm_length, thickness),
     ]
 
@@ -290,17 +330,35 @@ def walls_from_list(data):
             try:
                 kind = item.get("kind")
                 if kind == "circle":
-                    loaded.append(CircleWall(float(item["cx"]), float(item["cy"]), float(item["radius"]),
-                                             bool(item.get("enabled", True)), bool(item.get("goal_linked", False))))
+                    loaded.append(
+                        CircleWall(
+                            float(item["cx"]),
+                            float(item["cy"]),
+                            float(item["radius"]),
+                            bool(item.get("enabled", True)),
+                            bool(item.get("goal_linked", False)),
+                        )
+                    )
                     continue
                 if kind == "triangle":
-                    loaded.append(TriangleWall(item["points"], bool(item.get("enabled", True)),
-                                               bool(item.get("goal_linked", False))))
+                    loaded.append(
+                        TriangleWall(
+                            item["points"],
+                            bool(item.get("enabled", True)),
+                            bool(item.get("goal_linked", False)),
+                        )
+                    )
                     continue
-                loaded.append(Wall(
-                    float(item["x"]), float(item["y"]), float(item["width"]), float(item["height"]),
-                    bool(item.get("enabled", True)), bool(item.get("goal_linked", False)),
-                ))
+                loaded.append(
+                    Wall(
+                        float(item["x"]),
+                        float(item["y"]),
+                        float(item["width"]),
+                        float(item["height"]),
+                        bool(item.get("enabled", True)),
+                        bool(item.get("goal_linked", False)),
+                    )
+                )
             except (KeyError, TypeError, ValueError):
                 continue
     return loaded
@@ -332,14 +390,13 @@ def bounce_off_walls(bullet, old_x, old_y):
         hit_x = hit_y = True
     bullet.x, bullet.y = old_x, old_y
     if hit_x:
-        bullet.velocity.x *= -.5
+        bullet.velocity.x *= -0.5
     if hit_y:
-        bullet.velocity.y *= -.5
-    bullet.speed *= .7
+        bullet.velocity.y *= -0.5
+    bullet.speed *= 0.7
     return True
 
 
 def draw_walls(screen):
     for wall in walls:
         wall.draw(screen)
-

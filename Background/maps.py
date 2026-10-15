@@ -2,12 +2,21 @@ import json
 import os
 import random
 
-
 MAPS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "map_presets")
 DEFAULT_SPAWNING = {"mode": "default"}
 DEFAULT_GOAL_RADIUS = 45
 DEFAULT_LEVEL_END_DELAY_TICKS = 150
-ENEMY_TYPES = ("Chaser", "Dasher", "Blaster", "Ghost", "Spiker", "Commander", "Guardian", "Warper", "Turret")
+ENEMY_TYPES = (
+    "Chaser",
+    "Dasher",
+    "Blaster",
+    "Ghost",
+    "Spiker",
+    "Commander",
+    "Guardian",
+    "Warper",
+    "Turret",
+)
 
 DEFAULT_TUTORIAL = {
     "active": False,
@@ -31,8 +40,22 @@ DEFAULT_TUTORIAL = {
 ICON_SIZE = 16
 # Icon rows are 16 hex digits; digit 0 is transparent, the rest index ICON_PALETTE.
 ICON_PALETTE = (
-    None, (0, 0, 0), (255, 255, 255), (157, 157, 157), (190, 38, 51), (224, 111, 139), (164, 100, 34), (235, 137, 49),
-    (247, 226, 107), (68, 137, 26), (163, 206, 39), (0, 87, 132), (49, 162, 242), (178, 220, 239), (47, 72, 78), (137, 61, 156),
+    None,
+    (0, 0, 0),
+    (255, 255, 255),
+    (157, 157, 157),
+    (190, 38, 51),
+    (224, 111, 139),
+    (164, 100, 34),
+    (235, 137, 49),
+    (247, 226, 107),
+    (68, 137, 26),
+    (163, 206, 39),
+    (0, 87, 132),
+    (49, 162, 242),
+    (178, 220, 239),
+    (47, 72, 78),
+    (137, 61, 156),
 )
 
 
@@ -41,7 +64,11 @@ def sanitize_icon(icon):
         return None
     rows = []
     for row in icon:
-        if not isinstance(row, str) or len(row) != ICON_SIZE or any(c not in "0123456789abcdef" for c in row):
+        if (
+            not isinstance(row, str)
+            or len(row) != ICON_SIZE
+            or any(c not in "0123456789abcdef" for c in row)
+        ):
             return None
         rows.append(row)
     return rows if any(c != "0" for row in rows for c in row) else None
@@ -53,11 +80,25 @@ MAX_LEVELS = 50
 CARDS_PER_LEVEL = 3
 
 
-OBJECT_TYPES = frozenset({
-    "wall_rect", "wall_tri", "wall_circle", "trig_move", "trig_attack", "trig_ability", "spawn_zone",
-    "spawn_point", "kill_zone", "text", "level_end", "gate",
-    "wave_trigger", "level_trigger", "exp_spawner",
-})
+OBJECT_TYPES = frozenset(
+    {
+        "wall_rect",
+        "wall_tri",
+        "wall_circle",
+        "trig_move",
+        "trig_attack",
+        "trig_ability",
+        "spawn_zone",
+        "spawn_point",
+        "kill_zone",
+        "text",
+        "level_end",
+        "gate",
+        "wave_trigger",
+        "level_trigger",
+        "exp_spawner",
+    }
+)
 GATE_TYPES = ("AND", "OR", "NOT", "NAND", "NOR", "XOR", "XNOR")
 
 
@@ -102,7 +143,11 @@ def legacy_objects(data):
         for key, pool in (("walls", walls), ("zones", zones)):
             indices = entry.get(key, [])
             if isinstance(indices, list):
-                obj["targets"] += [pool[i]["id"] for i in indices if isinstance(i, int) and 0 <= i < len(pool)]
+                obj["targets"] += [
+                    pool[i]["id"]
+                    for i in indices
+                    if isinstance(i, int) and 0 <= i < len(pool)
+                ]
         if entry.get("ends_tutorial"):
             end = add("level_end", x=obj["x"], y=min(obj["y"] + 70, 585), r=30)
             obj["targets"].append(end["id"])
@@ -112,9 +157,15 @@ def legacy_objects(data):
         goals = [goals]
     for entry in goals if isinstance(goals, list) else []:
         try:
-            trigger = add("trig_move", x=float(entry["x"]), y=float(entry["y"]),
-                          r=max(5.0, float(entry.get("radius", DEFAULT_GOAL_RADIUS))),
-                          mode="latch", pulse_ticks=30, fulfilled=False)
+            trigger = add(
+                "trig_move",
+                x=float(entry["x"]),
+                y=float(entry["y"]),
+                r=max(5.0, float(entry.get("radius", DEFAULT_GOAL_RADIUS))),
+                mode="latch",
+                pulse_ticks=30,
+                fulfilled=False,
+            )
         except (KeyError, TypeError, ValueError):
             continue
         link(trigger, entry)
@@ -122,8 +173,12 @@ def legacy_objects(data):
     for entry in markers if isinstance(markers, list) else []:
         try:
             enemy = entry.get("enemy", ENEMY_TYPES[0])
-            point = add("spawn_point", x=float(entry["x"]), y=float(entry["y"]),
-                        enemy=enemy if enemy in ENEMY_TYPES else ENEMY_TYPES[0])
+            point = add(
+                "spawn_point",
+                x=float(entry["x"]),
+                y=float(entry["y"]),
+                enemy=enemy if enemy in ENEMY_TYPES else ENEMY_TYPES[0],
+            )
         except (KeyError, TypeError, ValueError, AttributeError):
             continue
         link(point, entry)
@@ -134,7 +189,11 @@ def parse_objects(items):
     """Validate editor-format objects, dropping unknown types and dangling links."""
     objects = []
     for item in items:
-        if isinstance(item, dict) and item.get("type") in OBJECT_TYPES and isinstance(item.get("id"), int):
+        if (
+            isinstance(item, dict)
+            and item.get("type") in OBJECT_TYPES
+            and isinstance(item.get("id"), int)
+        ):
             item.setdefault("targets", [])
             objects.append(item)
     ids = {o["id"] for o in objects}
@@ -143,6 +202,7 @@ def parse_objects(items):
         obj["targets"] = [t for t in targets if t in ids]
     return objects
 
+
 def sanitize_waves(waves):
     """Wave list -> [{enemy name: count}, ...] keeping only known enemies with positive counts."""
     clean = []
@@ -150,7 +210,11 @@ def sanitize_waves(waves):
         wave = wave if isinstance(wave, dict) else {}
         entry = {}
         for enemy, count in wave.items():
-            if enemy in ENEMY_TYPES and isinstance(count, (int, float)) and int(count) > 0:
+            if (
+                enemy in ENEMY_TYPES
+                and isinstance(count, (int, float))
+                and int(count) > 0
+            ):
                 entry[enemy] = int(count)
         clean.append(entry)
     return clean
@@ -162,9 +226,15 @@ def sanitize_levels(levels):
     for entry in (levels if isinstance(levels, list) else [])[:MAX_LEVELS]:
         entry = entry if isinstance(entry, dict) else {}
         exp = entry.get("exp")
-        exp = int(exp) if isinstance(exp, (int, float)) and not isinstance(exp, bool) and exp >= 1 else None
+        exp = (
+            int(exp)
+            if isinstance(exp, (int, float)) and not isinstance(exp, bool) and exp >= 1
+            else None
+        )
         cards = entry.get("cards") if isinstance(entry.get("cards"), list) else []
-        cards = [c if isinstance(c, str) and c else None for c in cards[:CARDS_PER_LEVEL]]
+        cards = [
+            c if isinstance(c, str) and c else None for c in cards[:CARDS_PER_LEVEL]
+        ]
         cards += [None] * (CARDS_PER_LEVEL - len(cards))
         clean.append({"exp": exp, "cards": cards})
     return clean
@@ -200,7 +270,11 @@ def _parse_tutorial(data, name):
     if not tutorial["intro"]:
         tutorial["intro"] = tutorial["name"]
     if not tutorial["goal_text"]:
-        tutorial["goal_text"] = {"reach": "Reach the glowing zone", "kill": "Defeat all enemies", "survive": "Survive"}[tutorial["goal"]]
+        tutorial["goal_text"] = {
+            "reach": "Reach the glowing zone",
+            "kill": "Defeat all enemies",
+            "survive": "Survive",
+        }[tutorial["goal"]]
     if not isinstance(tutorial["spawns"], list):
         tutorial["spawns"] = []
     return tutorial
@@ -222,6 +296,7 @@ def load_map(path):
         _parse_tutorial(data.get("tutorial"), name),
     )
 
+
 def load_map_by_name(name):
     try:
         return load_map(os.path.join(MAPS_DIR, os.path.basename(str(name)) + ".json"))
@@ -232,7 +307,11 @@ def load_map_by_name(name):
 def list_map_files():
     if not os.path.isdir(MAPS_DIR):
         return []
-    return [os.path.join(MAPS_DIR, f) for f in sorted(os.listdir(MAPS_DIR)) if f.lower().endswith(".json")]
+    return [
+        os.path.join(MAPS_DIR, f)
+        for f in sorted(os.listdir(MAPS_DIR))
+        if f.lower().endswith(".json")
+    ]
 
 
 def load_tutorial_maps():

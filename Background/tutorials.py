@@ -9,9 +9,13 @@ import Enemies.enemies as enemy_file
 _SPAWN_POINTS = ((0.88, 0.2), (0.88, 0.8), (0.92, 0.5), (0.5, 0.08), (0.5, 0.92))
 _COMPLETE_DELAY_TICKS = DEFAULT_LEVEL_END_DELAY_TICKS
 
+
 def _build_tutorials():
     # Tutorials are map presets whose tutorial flag is active; the map is referenced by file name.
-    return [dict(preset.tutorial, map=map_name) for map_name, preset in maps_file.load_tutorial_maps()]
+    return [
+        dict(preset.tutorial, map=map_name)
+        for map_name, preset in maps_file.load_tutorial_maps()
+    ]
 
 
 TUTORIALS = _build_tutorials()
@@ -34,7 +38,10 @@ class TutorialRun:
 
     @property
     def finished(self):
-        return self.complete_ticks is not None and self.complete_ticks >= self.completion_delay_ticks
+        return (
+            self.complete_ticks is not None
+            and self.complete_ticks >= self.completion_delay_ticks
+        )
 
     def _spawn_enemies(self, count):
         for _ in range(count):
@@ -61,7 +68,9 @@ class TutorialRun:
         if goal == "reach":
             reached = False
         elif goal == "kill":
-            reached = self.spawned_any and not any(enemy.health > 0 for enemy in enemy_file.enemies)
+            reached = self.spawned_any and not any(
+                enemy.health > 0 for enemy in enemy_file.enemies
+            )
             reached = reached and not (waves and runtime.waves_pending)
         else:
             reached = self.ticks >= self.tutorial["duration"]
