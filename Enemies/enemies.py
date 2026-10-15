@@ -173,7 +173,12 @@ class Enemy:
         self.max_iceshock_cooldown = 250
         self.iceshock_charge = 0
         self.iceshock_max_charge = 60
-
+        self.heal_radius = 40
+        self.heal_charge = 0
+        self.heal_cooldown = 0
+        self.max_heal_cooldown = 250
+        self.max_heal_charge = 60
+    
     def hurt(self, bullet, direct_damage=False):
         if direct_damage:
             if self.haunted:
@@ -1121,6 +1126,17 @@ class Enemy:
             round(self.iceshock_radius * progress),
         )
 
+
+    def ability_heal(self):
+        if self.heal_cooldown == 0:
+            self.heal_charge = self.max_heal_charge
+
+    def ability_heal_draw(self, screen):
+        if self.heal_charge > 0:
+            progress = self.heal_charge / self.max_heal_charge
+            pygame.draw.circle(screen, (0, 255, 0), (int(self.x), int(self.y)), self.heal_radius)
+            pygame.draw.circle(screen, (0, 200, 0), (int(self.x), int(self.y)), self.heal_radius, 2)
+            pygame.draw.circle(screen, (100, 255, 100), (int(self.x), int(self.y)), round(self.heal_radius * progress))
 
 class Bullet:
     def __init__(self, x, y, direction, damage, speed=5, owner=None):
