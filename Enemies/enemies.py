@@ -148,6 +148,11 @@ class Enemy:
         self.max_iceshock_cooldown = 250
         self.iceshock_charge = 0
         self.iceshock_max_charge = 60
+        self.heal_radius = 40
+        self.heal_charge = 0
+        self.heal_cooldown = 0
+        self.max_heal_cooldown = 250
+        self.max_heal_charge = 60
     
     def hurt(self, bullet, direct_damage=False):
         if direct_damage:
@@ -889,6 +894,17 @@ class Enemy:
         pygame.draw.circle(screen, (0, 150, 255), (int(self.iceshock_point[0]), int(self.iceshock_point[1])), self.iceshock_radius, 2)
         pygame.draw.circle(screen, (100, 100, 200), (int(self.iceshock_point[0]), int(self.iceshock_point[1])), round(self.iceshock_radius * progress))
 
+    def ability_heal(self):
+        if self.heal_cooldown == 0:
+            self.heal_charge = self.max_heal_charge
+
+    def ability_heal_draw(self, screen):
+        if self.heal_charge > 0:
+            progress = self.heal_charge / self.max_heal_charge
+            pygame.draw.circle(screen, (0, 255, 0), (int(self.x), int(self.y)), self.heal_radius)
+            pygame.draw.circle(screen, (0, 200, 0), (int(self.x), int(self.y)), self.heal_radius, 2)
+            pygame.draw.circle(screen, (100, 255, 100), (int(self.x), int(self.y)), round(self.heal_radius * progress))
+
 class Bullet:
     def __init__(self, x, y, direction, damage, speed=5, owner=None):
         self.x = x
@@ -1297,3 +1313,14 @@ class Freezer(Enemy):
             pygame.draw.circle(screen, (150, 220, 255), (int(self.x), int(self.y)), self.size + 3, 1)
             self.ability_iceshock_draw(screen)
 
+
+class Medic(Enemy):
+    def __init__(self, x, y, time):
+        health = _scaled_health(15, time)
+        damage = 1 + time/3000
+        super().__init__(x, y, 20, (150, 255, 150), health, damage, 0.9)
+        self.heal_radius = 40
+        self.heal_charge = 0
+        self.heal_cooldown = 0
+        self.max_heal_cooldown = 300
+        self.max_heal_charge = 60
