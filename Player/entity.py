@@ -1,4 +1,5 @@
 from helpers import Vector
+import pygame
 
 class Entity:
     def __init__(self, x, y, size, color, health):
@@ -13,7 +14,6 @@ class Entity:
         self.alive = True
 
     def draw(self, screen, font=None):
-        import pygame
         pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), self.size)
         pygame.draw.circle(screen, (255, 255, 255), (int(self.x), int(self.y)), self.size, 2)
         if self.health < self.max_health:

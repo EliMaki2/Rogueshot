@@ -889,6 +889,7 @@ class Enemy:
         pygame.draw.circle(screen, (0, 150, 255), (int(self.iceshock_point[0]), int(self.iceshock_point[1])), self.iceshock_radius, 2)
         pygame.draw.circle(screen, (100, 100, 200), (int(self.iceshock_point[0]), int(self.iceshock_point[1])), round(self.iceshock_radius * progress))
 
+
 class Bullet:
     def __init__(self, x, y, direction, damage, speed=5, owner=None):
         self.x = x

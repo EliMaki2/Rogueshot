@@ -12,9 +12,7 @@ driven by it:
 """
 import math
 import random
-
 import pygame
-
 import Background.walls as walls_file
 import Enemies.drops as drops_file
 from Background.maps import DEFAULT_LEVEL_END_DELAY_TICKS, GATE_TYPES
