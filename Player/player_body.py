@@ -2,29 +2,12 @@ import pygame
 import random
 import math
 
-from Player.gun import Gun, Shotgun, Blowdart, Cannon, Blade, Flamethrower
+from Player.gun import Shotgun, Blowdart, Cannon, Blade, Flamethrower
 from Player.entity import Entity
 import Player.bullets as bullets_file
 import Enemies.particles as particles_file
 from Background import run_stats
-
-class Vector:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-    def add(self, other):
-        return Vector(self.x + other.x, self.y + other.y)
-    def subtract(self, other):
-        return Vector(self.x - other.x, self.y - other.y)
-    def multiply(self, scalar):
-        return Vector(self.x * scalar, self.y * scalar)
-    def normalize(self):
-        magnitude = (self.x ** 2 + self.y ** 2) ** 0.5
-        if magnitude == 0:
-            return Vector(0, 0)
-        return Vector(self.x / magnitude, self.y / magnitude)
-    def magnitude(self):
-        return (self.x ** 2 + self.y ** 2) ** 0.5
+from helpers import Vector
 
 class PlayerBody(Entity):
     def __init__(self, x, y, size=20, color=(250,250,250), health=10):
@@ -287,11 +270,11 @@ class Nova(PlayerBody):
     def nova(self, targets):
         if self.nova_cooldown <= 0:
             for target in targets:
-                if (Vector(target.x - self.x, target.y - self.y).magnitude()) <= self.nova_range:
+                if (Vector(target.x - self.x, target.y - self.y).magnitude) <= self.nova_range:
                     self.affected_targets.append((target, self.nova_duration))
                     target.health -= round(self.damage * .5)
                 elif self.body_effect_unlocked:
-                    if (Vector(target.x - self.x, target.y - self.y).magnitude()) <= self.nova_range*3:
+                    if (Vector(target.x - self.x, target.y - self.y).magnitude) <= self.nova_range*3:
                         self.affected_targets.append((target, self.nova_duration/2))
                         target.health -= round(self.damage * .2)
             if self.nova_time <= 0:
@@ -353,7 +336,7 @@ class Slime(PlayerBody):
         for target in targets:
             for slimes in self.slime_trail:
                 x, y, size, color = slimes
-                if Vector(target.x - x, target.y - y).magnitude() <= size + target.size:
+                if Vector(target.x - x, target.y - y).magnitude <= size + target.size:
                     if target.harm_frames <= 0:
                         target.health -= round(self.damage * 0.8)
                         target.harm_frames = 10 
@@ -366,7 +349,7 @@ class Slime(PlayerBody):
         if self.body_effect_unlocked and self.slime_cooldown <= 5:
             for x in range(-200, 200, 35):
                 for y in range(-200, 200, 35):
-                    if Vector(x, y).magnitude() <= 100:
+                    if Vector(x, y).magnitude <= 100:
                         self.slime_trail.append((self.x + x + random.randint(-10, 10), self.y + y + random.randint(-10, 10), self.slime_size+5, (100,150,100)))
             self.slime_cooldown = 40
     

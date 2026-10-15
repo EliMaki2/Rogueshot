@@ -2,90 +2,67 @@ from Player.bullets import Bullet, Poison, Bomb, SlashBullet, Fire
 import math
 import pygame
 import random
-
-class Vector:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-    def add(self, other):
-        return Vector(self.x + other.x, self.y + other.y)
-    def subtract(self, other):
-        return Vector(self.x - other.x, self.y - other.y)
-    def multiply(self, scalar):
-        return Vector(self.x * scalar, self.y * scalar)
-    def normalize(self):
-        magnitude = (self.x ** 2 + self.y ** 2) ** 0.5
-        if magnitude == 0:
-            return Vector(0, 0)
-        return Vector(self.x / magnitude, self.y / magnitude)
-    def magnitude(self):
-        return (self.x ** 2 + self.y ** 2) ** 0.5
+from helpers import Vector
 
 class Gun:
     def __init__(self, owner):
         self.owner = owner
         self.rotation = "right"
+        
     def update(self):
         self.owner.attack_cooldown = max(0, self.owner.attack_cooldown - 1)
+        
     def shoot(self, direction, bullets, ignore_cooldown=False):
-        o = self.owner
-        if ignore_cooldown or o.attack_cooldown <= 0:
+        if ignore_cooldown or self.owner.attack_cooldown <= 0:
             if not ignore_cooldown:
-                o.attack_cooldown = o.attack_speed
+                self.owner.attack_cooldown = self.owner.attack_speed
+                
             # Calculate bullet direction
-            if direction == "up":
-                self.rotation = "up"
-                bullet_velocity = Vector(0, -1)
-            elif direction == "down":
-                self.rotation = "down"
-                bullet_velocity = Vector(0, 1)
-            elif direction == "left":
-                self.rotation = "left"
-                bullet_velocity = Vector(-1, 0)
-            elif direction == "right":
-                self.rotation = "right"
-                bullet_velocity = Vector(1, 0)
-            elif direction == "up-left":
-                self.rotation = "up-left"
-                bullet_velocity = Vector(-1, -1).normalize()
-            elif direction == "up-right":
-                self.rotation = "up-right"
-                bullet_velocity = Vector(1, -1).normalize()
-            elif direction == "down-left":
-                self.rotation = "down-left"
-                bullet_velocity = Vector(-1, 1).normalize()
-            elif direction == "down-right":         
-                self.rotation = "down-right"       
-                bullet_velocity = Vector(1, 1).normalize()
-            bullet_velocity = bullet_velocity.multiply(o.bullet_speed)
-            for i in range(o.multishot):
-                angle = (i - o.multishot // 2) * o.attack_spread
+            direction_map = {"up": Vector(0, -1),
+                             "down": Vector(0, 1),
+                             "left": Vector(-1, 0),
+                             "right": Vector(1, 0),
+                             "up-left": Vector(-1, -1).normalize(),
+                             "up-right": Vector(1, -1).normalize(),
+                             "down-left": Vector(-1, 1).normalize(),
+                             "down-right": Vector(1, 1).normalize()
+                             }
+            
+            self.rotation = direction if direction in direction_map else "right"
+            bullet_velocity = direction_map.get(direction, Vector(1, 0))
+                
+            bullet_velocity = bullet_velocity.multiply(self.owner.bullet_speed)
+            
+            for i in range(self.owner.multishot):
+                angle = (i - self.owner.multishot // 2) * self.owner.attack_spread
                 rotated_velocity = Vector(
                     bullet_velocity.x * math.cos(angle) - bullet_velocity.y * math.sin(angle),
                     bullet_velocity.x * math.sin(angle) + bullet_velocity.y * math.cos(angle)
                 )
-                shell = Bomb(o.x, o.y, rotated_velocity, o.damage, o.pierce, o.attack_range, 5, o.bullet_color, o.knockback)
-                if getattr(o, "gun_effect_unlocked", False):
+                shell = Bomb(self.owner.x, 
+                             self.owner.y, 
+                             rotated_velocity, 
+                             self.owner.damage, 
+                             self.owner.pierce, 
+                             self.owner.attack_range, 
+                             5, 
+                             self.owner.bullet_color, 
+                             self.owner.knockback)
+                if not self.owner.gun_effect_unlocked:
                     shell.explosion_radius += 20
                 bullets.append(shell)
     
     def draw(self, player, screen):
-        if self.rotation == "right":
-            pygame.draw.polygon(screen, (200, 200, 200), [(player.x-5, player.y-5), (player.x + 10, player.y), (player.x - 5, player.y + 5)])
-        elif self.rotation == "left":
-            pygame.draw.polygon(screen, (200, 200, 200), [(player.x+5, player.y-5), (player.x - 10, player.y), (player.x + 5, player.y + 5)])
-        elif self.rotation == "up":
-            pygame.draw.polygon(screen, (200, 200, 200), [(player.x-5, player.y+5), (player.x, player.y - 10), (player.x + 5, player.y + 5)])
-        elif self.rotation == "down":
-            pygame.draw.polygon(screen, (200, 200, 200), [(player.x-5, player.y-5), (player.x, player.y + 10), (player.x + 5, player.y-5)])
-        elif self.rotation == "up-left":
-            pygame.draw.polygon(screen, (200, 200, 200), [(player.x+5, player.y), (player.x - 7, player.y - 7), (player.x, player.y + 5)])
-        elif self.rotation == "up-right":
-            pygame.draw.polygon(screen, (200, 200, 200), [(player.x-5, player.y), (player.x + 7, player.y - 7), (player.x, player.y + 5)])
-        elif self.rotation == "down-left":
-            pygame.draw.polygon(screen, (200, 200, 200), [(player.x+5, player.y), (player.x - 7, player.y + 7), (player.x, player.y - 5)])
-        elif self.rotation == "down-right":
-            pygame.draw.polygon(screen, (200, 200, 200), [(player.x-5, player.y), (player.x + 7, player.y + 7), (player.x, player.y - 5)])
+        rotation_draw_map = {"right": [(player.x-5, player.y-5), (player.x + 10, player.y), (player.x - 5, player.y + 5)],
+                             "left": [(player.x+5, player.y-5), (player.x - 10, player.y), (player.x + 5, player.y + 5)],
+                             "up": [(player.x-5, player.y+5), (player.x, player.y - 10), (player.x + 5, player.y + 5)],
+                             "down": [(player.x-5, player.y-5), (player.x, player.y + 10), (player.x + 5, player.y-5)],
+                             "up-left": [(player.x+5, player.y), (player.x - 7, player.y - 7), (player.x, player.y + 5)],
+                             "up-right": [(player.x-5, player.y), (player.x + 7, player.y - 7), (player.x, player.y + 5)],
+                             "down-left": [(player.x+5, player.y), (player.x - 7, player.y + 7), (player.x, player.y - 5)],
+                             "down-right": [(player.x-5, player.y), (player.x + 7, player.y + 7), (player.x, player.y - 5)]}
+        if self.rotation in rotation_draw_map:
+            pygame.draw.polygon(screen, (200, 200, 200), rotation_draw_map[self.rotation])
 
 class Shotgun(Gun):
     def __init__(self, owner):
