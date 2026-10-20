@@ -219,11 +219,20 @@ class PlayerBody(Entity):
             self.current_aura = None
             self.current_aura_duration = 0
             self.current_aura_level = 0
+            return
+            # todo: Consider triggering a new aura or handling aura expiration effects here.
+
+        # Apply aura effect to nearby enemies at regular intervals
         if self.aura_tick >= self.aura_interval:
             self.aura_tick = 0
             for enemy in enemies:
                 if enemy.distance_to(self) <= self.aura_range:
-                    effect_mod.apply_effect(enemy, self.current_aura, 120, self.current_aura_level)
+                    effect_mod.apply_effect(
+                        entity=enemy, 
+                        effect_name=self.current_aura, 
+                        duration=120, 
+                        level=self.current_aura_level
+                    )
 
     def aura_draw(self, screen):
         if self.current_aura is None:

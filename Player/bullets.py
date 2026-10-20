@@ -77,7 +77,10 @@ class Poison(Bullet):
                 target.hurt(self)
                 poison_level = max(1, round(self.damage / 6))
                 effects_mod.apply_effect(
-                    target, "poisoned", self.poison_duration, poison_level
+                    entity=target, 
+                    effect=effects_mod.EffectType.POISONED, 
+                    duration=self.poison_duration, 
+                    level=poison_level
                 )
                 self.pierce -= 1
                 if self.pierce <= 0:

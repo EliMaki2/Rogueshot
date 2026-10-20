@@ -1,7 +1,8 @@
 import math
-from helpers import Vector
+from typing import Tuple, List
 import pygame
 import random
+from helpers import Vector
 from Enemies.particles import particles
 import Enemies.particles as particles_mod
 from Enemies.drops import drops, exp
@@ -9,6 +10,7 @@ import Enemies.drops as drops_mod
 from Background import run_stats
 from Background import walls as walls_mod
 import Enemies.effects as effects_mod
+
 
 enemies = []
 HAUNTING_ENEMY_NAMES = (
@@ -309,15 +311,15 @@ class Enemy:
     def distance_to(self, target):
         return ((self.x - target.x) ** 2 + (self.y - target.y) ** 2) ** 0.5
 
-    def closest_enemy(self, blacklist_effects=[]):
+    def closest_enemy(self, blacklist_effects):
         closest = None
         closest_distance = float('inf')
         for enemy in enemies:
             if enemy == self:
                 continue
             skip = False
-            for i in blacklist_effects:
-                effect, level = i
+            for each_blacklisted_effect in blacklist_effects:
+                effect, level = each_blacklisted_effect
                 if effects_mod.entity_has_effect(enemy, effect, level):
                     skip = True
                     break
@@ -1116,7 +1118,10 @@ class Enemy:
                 player.y - self.iceshock_point[1]
             ) ** 2 < self.iceshock_radius**2:
                 effects_mod.apply_effect(
-                    player, "frozen", duration=self.iceshock_length, level=1
+                    entity=player, 
+                    effect=effects_mod.EffectType.FROZEN, 
+                    duration=self.iceshock_length, 
+                    level=1
                 )
             self.iceshock_point = None
             self.iceshock_charge = 0
