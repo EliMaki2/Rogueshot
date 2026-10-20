@@ -98,8 +98,8 @@ class Mending(Effect):
 
 class Shocked(Effect):
     def __init__(self, entity, duration, level):
-        super().__init__(entity, duration, level, RGB_Color(255, 255, 0))
-        self.color = RGB_Color(255, 255, 0)
+        super().__init__(entity, duration, level, RGB_Color(255, 0, 250))
+        self.color = RGB_Color(255, 0, 250)
         self.tick_interval = 5
 
     def tick(self):
@@ -107,11 +107,12 @@ class Shocked(Effect):
         jump_target = self.entity.closest_enemy([("shocked", self.level)])
         if self.entity.distance_to(jump_target) < 100:
             if random.random() < 0.3:
-                apply_effect(jump_target, "shocked", self.level*10, max(1, self.level - 1))
+                apply_effect(jump_target, "shocked", 120, max(1, self.level - 1))
 
 
 def entity_has_effect(entity, effect_type, effect_level=None):
     for effect in effects:
+        print(f"Checking effect {effect_type}, {effect_level} on entity {entity}")
         if effect.entity == entity and isinstance(effect, effect_type):
             if effect_level is None or effect.level >= effect_level:
                 return effect
@@ -123,6 +124,14 @@ Effects_map = {"burning": Burning,
                "frozen": Frozen, 
                "mending": Mending,
                "shocked": Shocked}
+
+Effects_color_map = {
+    "burning": RGB_Color(255, 100, 100),
+    "poisoned": RGB_Color(150, 255, 50),
+    "frozen": RGB_Color(120, 90, 255),
+    "mending": RGB_Color(55, 255, 75),
+    "shocked": RGB_Color(255, 0, 250)
+}
 
 def apply_effect(entity, effect, duration, level):
     effect_instance = Effects_map.get(effect, None)

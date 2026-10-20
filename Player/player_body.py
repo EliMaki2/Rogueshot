@@ -223,20 +223,19 @@ class PlayerBody(Entity):
             self.aura_tick = 0
             for enemy in enemies:
                 if enemy.distance_to(self) <= self.aura_range:
-                    effect_mod.apply_effect(self.current_aura, enemy, 60, self.current_aura_level)
+                    effect_mod.apply_effect(enemy, self.current_aura, 120, self.current_aura_level)
 
     def aura_draw(self, screen):
         if self.current_aura is None:
             return 
-        effect = effect_mod.Effects_map[self.current_aura]
-        print(f"Drawing aura for effect: {effect}")
-        bright_color = effect.color.to_tuple()
-        dim_color = effect.color.brighten(0.5).to_tuple()
+        effect_color = effect_mod.Effects_color_map[self.current_aura]
+        bright_color = effect_color.to_tuple()
+        dim_color = effect_color.brighten(0.5).to_tuple()
         pygame.draw.circle(
             screen,
             bright_color,
             (int(self.x), int(self.y)),
-            int(self.aura_range * (self.aura_tick / self.aura_interval))
+            int(self.aura_range * (self.current_aura_duration / self.max_aura_duration))
         )
         pygame.draw.circle(
             screen,

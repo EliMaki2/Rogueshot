@@ -316,7 +316,8 @@ class Enemy:
             if enemy == self:
                 continue
             skip = False
-            for effect, level in blacklist_effects:
+            for i in blacklist_effects:
+                effect, level = i
                 if effects_mod.entity_has_effect(enemy, effect, level):
                     skip = True
                     break
