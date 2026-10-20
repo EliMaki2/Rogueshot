@@ -2,9 +2,11 @@ import pygame
 import random
 import math
 
+
 from Player.gun import Shotgun, Blowdart, Cannon, Blade, Flamethrower
 from Player.entity import Entity
 import Player.bullets as bullets_file
+import Enemies.effects as effect_mod
 import Enemies.particles as particles_file
 from Background import run_stats
 from helpers import Vector
@@ -36,6 +38,25 @@ class PlayerBody(Entity):
         self.post_hit_refund_damage = 0
         self.pending_parry_death = False
         self.dash_stamp_timer = 0
+        self.rage_time = 0
+        self.dash_cooldown = 0
+        self.dash_cooldown_duration = 60
+        self.push_cooldown = 0
+        self.max_push_cooldown = 15
+        self.nova_cooldown = 0
+        self.nova_range = 150
+        self.nova_duration = 25
+        self.nova_time = 0
+        self.affected_targets = []
+        self.aura_list = ["burning", "poisoned", "frozen", "shocked"]
+        self.current_aura = None
+        self.max_aura_duration = 60
+        self.current_aura_duration = 0
+        self.current_aura_level = 0
+        self.aura_cooldown = 0
+        self.aura_range = 80
+        self.aura_tick = 0
+        self.aura_interval = 10
 
     def shoot(self, direction):
         self.gun.shoot(direction, bullets_file.bullets)
@@ -86,6 +107,144 @@ class PlayerBody(Entity):
 
         actual_damage = min(pre_hit_health, damage_taken)
         self._start_post_hit_parry_window(actual_damage, would_die)
+
+    def ability_retribute(self):
+        vectors = []
+        for _ in range(self.body_boost_tier+1):
+            vectors.append(["up", "down", "left", "right"])
+        for _ in range(self.body_boost_tier // 2):
+            vectors.append(["up-left", "up-right", "down-left", "down-right"])
+        for set in vectors:
+            for direction in set:
+                if isinstance(self.gun, Blade):
+                    self.gun.shoot(
+                        direction,
+                        bullets_file.bullets,
+                        ignore_cooldown=True,
+                        allow_parry=False,
+                    )
+                else:
+                    print(direction)
+                    self.gun.shoot(
+                        direction, bullets_file.bullets, ignore_cooldown=True
+                    )
+
+    def ability_rage_start(self):
+        if self.health <= 2:
+            return
+        self.health -= 2
+        if self.rage_time > 0:
+            self.rage_time = 120 + self.body_boost_tier * 30
+            return
+        self.rage_time = 120 + self.body_boost_tier * 30
+        self.damage = round(self.damage * 1.3)
+        self.attack_speed = max(3, self.attack_speed - 5)
+        self.attack_spread += 0.02
+        self.multishot += 2
+
+    def ability_rage_update(self):
+        if self.rage_time > 0:
+            self.rage_time -= 1
+            if self.rage_time == 0:
+                self.damage = round(self.damage / 1.3)
+                self.attack_speed = min(100, self.attack_speed + 5)
+                self.attack_spread -= 0.02
+                self.multishot -= 2
+
+    def ability_push(self, enemy):
+        #push enemies that were collided
+        if self.push_cooldown > 0:
+            return
+        if enemy is not None:
+            push_vector = (enemy.position.subtract(self.position)).normalize()
+            enemy.velocity = enemy.velocity.add(push_vector.multiply(10))
+            self.push_cooldown = self.max_push_cooldown
+
+    def dash(self, direction):
+        if self.body_effect_unlocked:
+            self.iframes = 20
+        if self.dash_cooldown <= 0:
+            dash_vector = Vector(0, 0)
+            if direction == "up":
+                dash_vector = Vector(0, -1)
+            elif direction == "down":
+                dash_vector = Vector(0, 1)
+            elif direction == "left":
+                dash_vector = Vector(-1, 0)
+            elif direction == "right":
+                dash_vector = Vector(1, 0)
+            elif direction == "up-left":
+                dash_vector = Vector(-1, -1).normalize()
+            elif direction == "up-right":
+                dash_vector = Vector(1, -1).normalize()
+            elif direction == "down-left":
+                dash_vector = Vector(-1, 1).normalize()
+            elif direction == "down-right":
+                dash_vector = Vector(1, 1).normalize()
+            self.velocity = self.velocity.add(dash_vector.multiply(20))
+            self.dash_stamp_timer = 8
+            self.dash_cooldown = self.dash_cooldown_duration
+
+    def nova(self, targets):
+        if self.nova_cooldown <= 0:
+            for target in targets:
+                if (
+                    Vector(target.x - self.x, target.y - self.y).magnitude
+                ) <= self.nova_range:
+                    self.affected_targets.append((target, self.nova_duration))
+                    target.health -= round(self.damage * 0.5)
+                elif self.body_effect_unlocked:
+                    if (
+                        Vector(target.x - self.x, target.y - self.y).magnitude
+                    ) <= self.nova_range * 3:
+                        self.affected_targets.append((target, self.nova_duration / 2))
+                        target.health -= round(self.damage * 0.2)
+            if self.nova_time <= 0:
+                self.nova_time = 25
+            self.nova_cooldown = 120
+
+    def create_aura(self):
+        self.current_aura = random.choice(self.aura_list)
+        self.current_aura_duration = self.max_aura_duration
+        self.current_aura_level = 1
+        self.aura_tick = 0
+        self.aura_cooldown = 120
+        
+    def aura_update(self, enemies):
+        if self.current_aura is None:
+            return
+        self.aura_tick += 1
+        self.current_aura_duration -= 1
+        if self.current_aura_duration <= 0:
+            self.current_aura = None
+            self.current_aura_duration = 0
+            self.current_aura_level = 0
+        if self.aura_tick >= self.aura_interval:
+            self.aura_tick = 0
+            for enemy in enemies:
+                if enemy.distance_to(self) <= self.aura_range:
+                    effect_mod.apply_effect(self.current_aura, enemy, 60, self.current_aura_level)
+
+    def aura_draw(self, screen):
+        if self.current_aura is None:
+            return 
+        effect = effect_mod.Effects_map[self.current_aura]
+        print(f"Drawing aura for effect: {effect}")
+        bright_color = effect.color.to_tuple()
+        dim_color = effect.color.brighten(0.5).to_tuple()
+        pygame.draw.circle(
+            screen,
+            bright_color,
+            (int(self.x), int(self.y)),
+            int(self.aura_range * (self.aura_tick / self.aura_interval))
+        )
+        pygame.draw.circle(
+            screen,
+            dim_color,
+            (int(self.x), int(self.y)),
+            int(self.aura_range),
+            2,
+        )
 
     def _start_post_hit_parry_window(self, damage_taken, lethal_hit):
         if damage_taken <= 0:
@@ -190,46 +349,18 @@ def spawn_unlock_particles(player, count, color=None):
 class Retribution(PlayerBody):
     def __init__(self, x, y, size=20, color=(250, 200, 200), health=10):
         super().__init__(x, y, size, color, health)
-        self.retribution = True
         self.rage_time = 0
 
     def hurt(self, enemy, direct_damage=False):
         if self.iframes <= 0:
             if self.body_effect_unlocked:
-                self.rage()
+                self.ability_rage()
             super().hurt(enemy, direct_damage=direct_damage)
-            if self.retribution:
+            self.ability_retribute()
 
-                def fire_retribution_shot(direction):
-                    if isinstance(self.gun, Blade):
-                        self.gun.shoot(
-                            direction,
-                            bullets_file.bullets,
-                            ignore_cooldown=True,
-                            allow_parry=False,
-                        )
-                    else:
-                        self.gun.shoot(
-                            direction, bullets_file.bullets, ignore_cooldown=True
-                        )
-
-                for i in range(self.body_boost_tier + 1):
-                    fire_retribution_shot("up")
-                    fire_retribution_shot("down")
-                    fire_retribution_shot("left")
-                    fire_retribution_shot("right")
-                for i in range(self.body_boost_tier // 2):
-                    fire_retribution_shot("up-left")
-                    fire_retribution_shot("up-right")
-                    fire_retribution_shot("down-left")
-                    fire_retribution_shot("down-right")
-
-    def rage(self):
-        self.rage_time = 120 + self.body_boost_tier * 30
-        self.damage = round(self.damage * 1.3)
-        self.attack_speed = max(3, self.attack_speed - 5)
-        self.attack_spread += 0.02
-        self.multishot += 2
+    def move(self):
+        self.ability_rage_update()
+        super().move()
 
     def draw(self, screen, font=None):
         super().draw(screen, font)
@@ -241,80 +372,27 @@ class Retribution(PlayerBody):
                 self.size + round(self.rage_time / 5),
                 4,
             )
-            self.rage_time -= 1
-            self.attack_cooldown -= 5
-            if self.attack_cooldown < 0:
-                self.attack_cooldown = 0
-            if self.rage_time == 0:
-                self.damage = round(self.damage / 1.3)
-                self.attack_speed += 5
-                self.attack_spread -= 0.02
-                self.multishot -= 2
 
 
 class Dasher(PlayerBody):
     def __init__(self, x, y, size=20, color=(250, 250, 200), health=10):
         super().__init__(x, y, size, color, health)
-        self.dash_cooldown = 0
-        self.dash_cooldown_duration = 60
-
-    def dash(self, direction):
-        if self.body_effect_unlocked:
-            self.iframes = 20
-        if self.dash_cooldown <= 0:
-            dash_vector = Vector(0, 0)
-            if direction == "up":
-                dash_vector = Vector(0, -1)
-            elif direction == "down":
-                dash_vector = Vector(0, 1)
-            elif direction == "left":
-                dash_vector = Vector(-1, 0)
-            elif direction == "right":
-                dash_vector = Vector(1, 0)
-            elif direction == "up-left":
-                dash_vector = Vector(-1, -1).normalize()
-            elif direction == "up-right":
-                dash_vector = Vector(1, -1).normalize()
-            elif direction == "down-left":
-                dash_vector = Vector(-1, 1).normalize()
-            elif direction == "down-right":
-                dash_vector = Vector(1, 1).normalize()
-            self.velocity = self.velocity.add(dash_vector.multiply(20))
-            self.dash_stamp_timer = 8
-            self.dash_cooldown = self.dash_cooldown_duration
 
     def move(self):
         if self.dash_cooldown > 0:
             self.dash_cooldown -= 1
         super().move()
 
+    def hurt(self, enemy, direct_damage=False):
+        if self.body_effect_unlocked:
+            self.ability_push(enemy)
+        if self.iframes <= 0:
+            super().hurt(enemy, direct_damage=direct_damage)
+
 
 class Nova(PlayerBody):
     def __init__(self, x, y, size=20, color=(200, 250, 250), health=10):
         super().__init__(x, y, size, color, health)
-        self.nova_cooldown = 0
-        self.nova_range = 150
-        self.nova_duration = 25
-        self.nova_time = 0
-        self.affected_targets = []
-
-    def nova(self, targets):
-        if self.nova_cooldown <= 0:
-            for target in targets:
-                if (
-                    Vector(target.x - self.x, target.y - self.y).magnitude
-                ) <= self.nova_range:
-                    self.affected_targets.append((target, self.nova_duration))
-                    target.health -= round(self.damage * 0.5)
-                elif self.body_effect_unlocked:
-                    if (
-                        Vector(target.x - self.x, target.y - self.y).magnitude
-                    ) <= self.nova_range * 3:
-                        self.affected_targets.append((target, self.nova_duration / 2))
-                        target.health -= round(self.damage * 0.2)
-            if self.nova_time <= 0:
-                self.nova_time = 25
-            self.nova_cooldown = 120
 
     def move(self):
         if self.nova_cooldown > 0:
@@ -436,12 +514,27 @@ class Slime(PlayerBody):
             super().hurt(enemy)
             self.slime_trail.append((self.x, self.y, self.slime_size, (100, 150, 100)))
 
+class Arcanist(PlayerBody):
+    def __init__(self, x, y, size=20, color=(250, 200, 225), health=10):
+        super().__init__(x, y, size, color, health)
+
+    def move(self):
+        super().move()
+        if self.aura_cooldown <= 0:
+            self.create_aura()
+        self.aura_cooldown -= 1
+
+    def draw(self, screen, font=None):
+        if self.current_aura_duration > 0:
+            self.aura_draw(screen)
+        super().draw(screen, font)
 
 BODY_TYPES = {
     "Dasher": Dasher,
     "Retribution": Retribution,
     "Nova": Nova,
     "Slime": Slime,
+    "Arcanist": Arcanist,
 }
 
 GUN_TYPES = {
@@ -457,6 +550,7 @@ BODY_SUMMARIES = {
     "Retribution": "Fire a burst in  \nevery direction when hit.",
     "Nova": "Release a nova that \npushes nearby enemies with shift.",
     "Slime": "Leave a damaging slime \ntrail as you move.",
+    "Arcanist": "Create a damaging aura \nthat affects nearby enemies.",
 }
 
 GUN_SUMMARIES = {
@@ -515,6 +609,7 @@ def apply_body_stat_boost(player):
     if isinstance(player, Dasher):
         player.speed += 0.12
         player.dash_cooldown_duration = max(30, player.dash_cooldown_duration - 5)
+        player.max_push_cooldown = max(2, player.max_push_cooldown - 1)
     elif isinstance(player, Retribution):
         player.max_health += 3
         player.health = min(player.max_health, player.health + 3)

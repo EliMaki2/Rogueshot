@@ -107,7 +107,7 @@ achievements_scroll_by_category = {
     "Secret": 0,
 }
 selected_body = "Dasher"
-selected_gun = "Cannon"
+selected_gun = "Shotgun"
 selected_upgrade_index = 0
 player = None
 level_card = None
@@ -1227,6 +1227,8 @@ while running:
             _record_offscreen_secret_progress(player)
             if isinstance(player, player_body.Slime):
                 player.slime_target(enemies)
+            if isinstance(player, player_body.Arcanist):
+                player.aura_update(enemies)
             if player.x < 0 + player.size:
                 player.x += 1
             elif player.x > Width * ui_assets.Horizontal_Scale - player.size:

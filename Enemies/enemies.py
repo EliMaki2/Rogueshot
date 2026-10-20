@@ -309,6 +309,25 @@ class Enemy:
     def distance_to(self, target):
         return ((self.x - target.x) ** 2 + (self.y - target.y) ** 2) ** 0.5
 
+    def closest_enemy(self, blacklist_effects=[]):
+        closest = None
+        closest_distance = float('inf')
+        for enemy in enemies:
+            if enemy == self:
+                continue
+            skip = False
+            for effect, level in blacklist_effects:
+                if effects_mod.entity_has_effect(enemy, effect, level):
+                    skip = True
+                    break
+            if skip:
+                continue
+            distance = self.distance_to(enemy)
+            if distance < closest_distance:
+                closest = enemy
+                closest_distance = distance
+        return closest
+
     def ray_distance(self, origin_x, origin_y, dir_x, dir_y, max_length, padding=0):
         """Distance along a ray to the nearest padded wall, or None if it's clear."""
         best = None

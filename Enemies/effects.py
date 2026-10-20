@@ -2,7 +2,6 @@ import pygame
 import random
 from helpers import RGB_Color
 
-
 effects = []
 
 class Effect:
@@ -50,6 +49,7 @@ class Effect:
 class Burning(Effect):
     def __init__(self, entity, duration, level):
         super().__init__(entity, duration, level, RGB_Color(255, 200, 100))
+        self.color = RGB_Color(255, 100, 100)
 
     def tick(self):
         self.entity.hurt(self.level*2, direct_damage=True)
@@ -57,6 +57,7 @@ class Burning(Effect):
 class Poisoned(Effect):
     def __init__(self, entity, duration, level):
         super().__init__(entity, duration, level, RGB_Color(150, 255, 50))
+        self.color = RGB_Color(150, 255, 50)
         self.tick_interval = 15
 
     def tick(self):
@@ -67,6 +68,7 @@ class Poisoned(Effect):
 class Frozen(Effect):
     def __init__(self, entity, duration, level):
         super().__init__(entity, duration, level, RGB_Color(120, 60, 255))
+        self.color = RGB_Color(120, 60, 255)
         self.tick_interval = 2
         self.lock_x = self.entity.x
         self.lock_y = self.entity.y
@@ -89,21 +91,38 @@ class Frozen(Effect):
 class Mending(Effect):
     def __init__(self, entity, duration, level):
         super().__init__(entity, duration, level, RGB_Color(55, 255, 75))
+        self.color = RGB_Color(55, 255, 75)
 
     def tick(self):
         self.entity.health = min(self.entity.max_health, self.entity.health + self.level)
 
+class Shocked(Effect):
+    def __init__(self, entity, duration, level):
+        super().__init__(entity, duration, level, RGB_Color(255, 255, 0))
+        self.color = RGB_Color(255, 255, 0)
+        self.tick_interval = 5
 
-def entity_has_effect(entity, effect_type):
+    def tick(self):
+        self.entity.hurt(self.level/2, direct_damage=True)
+        jump_target = self.entity.closest_enemy([("shocked", self.level)])
+        if self.entity.distance_to(jump_target) < 100:
+            if random.random() < 0.3:
+                apply_effect(jump_target, "shocked", self.level*10, max(1, self.level - 1))
+
+
+def entity_has_effect(entity, effect_type, effect_level=None):
     for effect in effects:
         if effect.entity == entity and isinstance(effect, effect_type):
-            return effect
+            if effect_level is None or effect.level >= effect_level:
+                return effect
     return False
+
 
 Effects_map = {"burning": Burning,
                "poisoned": Poisoned, 
                "frozen": Frozen, 
-               "mending": Mending}
+               "mending": Mending,
+               "shocked": Shocked}
 
 def apply_effect(entity, effect, duration, level):
     effect_instance = Effects_map.get(effect, None)
@@ -112,10 +131,8 @@ def apply_effect(entity, effect, duration, level):
     current_effect = entity_has_effect(entity, effect_instance)
     if current_effect:
         current_effect.level += level
-        print(f"Updated effect {effect} on entity {entity} to level {current_effect.level} with duration {current_effect.duration}")
         return
     effects.append(effect_instance(entity, duration, level))
-    print(f"Applied effect {effect} to entity {entity} with duration {duration} and level {level}")
 
 def update_effects():
     #call every tick
